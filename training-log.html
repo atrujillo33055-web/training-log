@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training Log">
+<meta name="theme-color" content="#0b0d12">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACHElEQVR4nO3dsU3DUBRAUYLoojRpMkCmYIMswDBMwDAswAZMkQGyBQVINLmSFYf4R5xT2/q/uHrNk+XVerN9gHMel74A4xIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIH6WnpC/w6vj/PeX3/8nmtm/DN5CCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJg/SHK/uJK/irr9qXOvdmdm+H6Q+fXj8uPsjkIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDNNBX9v/Kzdbuc5gcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQrOwvdxdr9zlMDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SKv1Zrv0HX5M/HFfud8f+g3L5CCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgzTQyp7RmBwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRykL/qDFuw2ii8nAAAAAElFTkSuQmCC">
+<title>Training Log</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --card: #14171f;
+    --card-hi: #191d27;
+    --line: #262b36;
+    --text: #f2f3f5;
+    --sub: #8a90a0;
+    --push: #2f6fd1;
+    --pull: #22945a;
+    --legs: #c1531f;
+    --gold: #e8b84b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, sans-serif;
+    padding-bottom: 40px;
+  }
+  header {
+    padding: 22px 18px 14px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 2px;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    margin: 0;
+    color: var(--sub);
+    font-size: 12.5px;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 14px 18px 0;
+  }
+  .tab {
+    padding: 10px 6px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--card);
+    color: var(--sub);
+    border: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .tab.active[data-type="push"] { background: var(--push); color: white; border-color: var(--push); }
+  .tab.active[data-type="pull"] { background: var(--pull); color: white; border-color: var(--pull); }
+  .tab.active[data-type="legs"] { background: var(--legs); color: white; border-color: var(--legs); }
+  .sub {
+    color: var(--sub);
+    font-weight: 500;
+    font-size: 10.5px;
+    display: block;
+    margin-top: 1px;
+  }
+  main { padding: 16px 18px 0; }
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .ex-head {
+    padding: 14px 14px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  .ex-name { font-size: 14.5px; font-weight: 700; }
+  .ex-hint { color: var(--sub); font-size: 11px; margin-top: 2px; }
+  .pr {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--gold);
+    white-space: nowrap;
+    margin-left: 10px;
+  }
+  .pr span { color: var(--sub); font-weight: 500; font-size: 10px; display: block; text-align: right; }
+  .history {
+    padding: 0 14px 10px;
+    color: var(--sub);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  .logrow {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .logrow input {
+    background: var(--card-hi);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 8px;
+    font-size: 14px;
+    width: 100%;
+    text-align: center;
+  }
+  .logrow input::placeholder { color: #565c6b; }
+  .logrow button {
+    background: var(--text);
+    color: #0b0d12;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 0 16px;
+    white-space: nowrap;
+  }
+  .expand {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+  }
+  .expand.open { max-height: 400px; overflow-y: auto; }
+  .entry-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .entry-row .del { color: #c1531f; font-weight: 700; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #14171f;
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .empty { color: var(--sub); font-size: 12.5px; text-align: center; padding: 30px 0; }
+  .loading { color: var(--sub); font-size: 13px; text-align: center; padding: 40px 0; }
+
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 12px 18px 0;
+  }
+  .navtab {
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--sub);
+    border-bottom: 2px solid var(--line);
+  }
+  .navtab.active {
+    color: var(--text);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .pep-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .pep-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .pep-name {
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .pep-sub {
+    color: var(--sub);
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 5px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .pill.due { background: #1d3a24; color: #4fd97a; }
+  .pill.off { background: #2a2d38; color: var(--sub); }
+  .pill.done { background: #2a2d38; color: var(--sub); }
+  .pill.taken { background: #33301a; color: var(--gold); }
+  .pep-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .pep-btn {
+    flex: 1;
+    background: var(--text);
+    color: #0b0d12;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 10px;
+  }
+  .pep-btn.done-btn {
+    background: var(--card-hi);
+    color: var(--sub);
+    border: 1px solid var(--line);
+  }
+  .dots {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 12px;
+  }
+  .dot {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: var(--card-hi);
+    border: 1px solid var(--line);
+  }
+  .dot.taken { background: #22945a; border-color: #22945a; }
+  .dot.partial {
+    background: linear-gradient(90deg, #22945a 50%, var(--card-hi) 50%);
+    border-color: var(--line);
+  }
+  .dot.na {
+    background: repeating-linear-gradient(135deg, var(--card-hi), var(--card-hi) 3px, #1b1e26 3px, #1b1e26 6px);
+    border: 1px dashed var(--line);
+  }
+  .day-header-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .day-header-row div {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--sub);
+    text-transform: uppercase;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .chart-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .chart-stat-label { color: var(--sub); font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
+  .chart-stat-val { font-size: 20px; font-weight: 800; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Training Log</h1>
+  <p id="daylabel">Loading...</p>
+</header>
+
+<div class="navbar" id="navbar">
+  <div class="navtab active" data-view="log">Log</div>
+  <div class="navtab" data-view="data">Data</div>
+  <div class="navtab" data-view="peptides">Peptides</div>
+</div>
+
+<div id="logView">
+<div class="tabs" id="tabs"></div>
+
+<div style="padding: 12px 18px 0;">
+  <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">SESSION DATE</label>
+  <input type="date" id="sessionDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
+</div>
+
+<main id="main">
+  <div class="loading">Loading your log...</div>
+</main>
+</div>
+
+<div id="dataView" style="display:none; padding: 16px 18px 0;">
+  <select id="exerciseSelect" style="width:100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 14px;"></select>
+  <div id="chartWrap"></div>
+</div>
+
+<div id="peptideView" style="display:none; padding: 16px 18px 0;">
+  <div class="day-header-row" id="dayHeaderRow"></div>
+  <div id="peptideCards"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS = {
+  "Push A": { type: "push", subtitle: "Chest emphasis: flat", exercises: [
+    "Machine Flat Press", "Incline Machine Press", "Cable Lateral Raise", "OHE", "Tricep Pushdown"
+  ]},
+  "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
+    "Incline Machine Press", "Machine Flat Press", "Chest Fly", "OHE", "Single Arm Lat Raise"
+  ]},
+  "Pull A": { type: "pull", subtitle: "Verticals + traps + rear delts", exercises: [
+    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Rear Delt Fly", "Preacher Curl", "Behind the Body Cable Curl"
+  ]},
+  "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
+    "Chest Supported Row", "Kelso Shrug", "Seated Cable Row", "Shrugs", "Rear Delt Fly", "Incline Curl", "Hammer Curl"
+  ]},
+  "Legs A": { type: "legs", subtitle: "Hip dominant", exercises: [
+    "RDL", "Hack Squat", "Leg Curl", "Hip Adduction/Abduction", "Standing Calf Raise", "Cable Crunch"
+  ]},
+  "Legs B": { type: "legs", subtitle: "Quad dominant", exercises: [
+    "Hack Squat", "Leg Extension", "Leg Curl", "Seated Calf", "Cable Crunch"
+  ]},
+};
+
+let logs = [];
+let currentDay = "Push A";
+let sessionDate = todayStr();
+let storageReady = false;
+const STORAGE_KEY = "ale-training-logs-v1";
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+async function loadLogs() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY, false);
+    logs = result && result.value ? JSON.parse(result.value) : [];
+  } catch (e) {
+    logs = [];
+  }
+  storageReady = true;
+  render();
+}
+
+async function saveLogs() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(logs), false);
+  } catch (e) {
+    showToast("Save failed, try again");
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+function getExerciseLogs(name) {
+  return logs.filter(l => l.exercise === name).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function getPR(name) {
+  const entries = getExerciseLogs(name);
+  if (!entries.length) return null;
+  return entries.reduce((max, e) => e.weight > max.weight ? e : max, entries[0]);
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = "";
+  Object.keys(DAYS).forEach(day => {
+    const info = DAYS[day];
+    const div = document.createElement("div");
+    div.className = "tab" + (day === currentDay ? " active" : "");
+    div.dataset.type = info.type;
+    div.textContent = day;
+    div.onclick = () => { currentDay = day; render(); };
+    tabsEl.appendChild(div);
+  });
+}
+
+function render() {
+  renderTabs();
+  const dateInput = document.getElementById("sessionDate");
+  if (!dateInput.value) dateInput.value = sessionDate;
+  dateInput.onchange = () => { sessionDate = dateInput.value; };
+
+  const info = DAYS[currentDay];
+  document.getElementById("daylabel").textContent = info.subtitle;
+  const main = document.getElementById("main");
+
+  if (!storageReady) {
+    main.innerHTML = '<div class="loading">Loading your log...</div>';
+    return;
+  }
+
+  main.innerHTML = "";
+  info.exercises.forEach(name => {
+    const pr = getPR(name);
+    const history = getExerciseLogs(name).slice(0, 3);
+
+    const card = document.createElement("div");
+    card.className = "exercise";
+
+    const head = document.createElement("div");
+    head.className = "ex-head";
+    head.innerHTML = `
+      <div>
+        <div class="ex-name">${name}</div>
+        <div class="ex-hint">${history.length ? history.map(h => `${h.date.slice(5)}: ${h.weight}${h.reps ? ' x' + h.reps : ''}`).join(' &middot; ') : 'No entries yet'}</div>
+      </div>
+      <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
+    `;
+    card.appendChild(head);
+
+    const logrow = document.createElement("div");
+    logrow.className = "logrow";
+    logrow.innerHTML = `
+      <input type="number" inputmode="decimal" placeholder="Weight" class="w-input" style="flex:1.3">
+      <input type="number" inputmode="numeric" placeholder="Reps" class="r-input" style="flex:1">
+      <button class="log-btn">Log</button>
+    `;
+    const wInput = logrow.querySelector(".w-input");
+    const rInput = logrow.querySelector(".r-input");
+    const btn = logrow.querySelector(".log-btn");
+    btn.onclick = async () => {
+      const weight = parseFloat(wInput.value);
+      const reps = rInput.value ? parseInt(rInput.value) : null;
+      if (!weight) { showToast("Enter a weight"); return; }
+      logs.push({ id: Date.now() + Math.random(), date: sessionDate, day: currentDay, exercise: name, weight, reps });
+      wInput.value = ""; rInput.value = "";
+      await saveLogs();
+      showToast(name + " logged");
+      render();
+    };
+    card.appendChild(logrow);
+
+    const allHistory = getExerciseLogs(name);
+    if (allHistory.length) {
+      const expand = document.createElement("div");
+      expand.className = "expand";
+      allHistory.forEach(e => {
+        const row = document.createElement("div");
+        row.className = "entry-row";
+        row.innerHTML = `<span>${e.date} &middot; ${e.weight}${e.reps ? ' x ' + e.reps : ''}</span><span class="del">Delete</span>`;
+        row.querySelector(".del").onclick = async (ev) => {
+          ev.stopPropagation();
+          logs = logs.filter(l => l.id !== e.id);
+          await saveLogs();
+          render();
+        };
+        expand.appendChild(row);
+      });
+      card.appendChild(expand);
+      head.style.cursor = "pointer";
+      head.onclick = () => { expand.classList.toggle("open"); };
+    }
+
+    main.appendChild(card);
+  });
+}
+
+// ---------- VIEW SWITCHING ----------
+let currentView = "log";
+document.getElementById("navbar").querySelectorAll(".navtab").forEach(tab => {
+  tab.onclick = () => {
+    currentView = tab.dataset.view;
+    document.querySelectorAll(".navtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("logView").style.display = currentView === "log" ? "" : "none";
+    document.getElementById("dataView").style.display = currentView === "data" ? "" : "none";
+    document.getElementById("peptideView").style.display = currentView === "peptides" ? "" : "none";
+    document.getElementById("daylabel").textContent =
+      currentView === "log" ? DAYS[currentDay].subtitle :
+      currentView === "data" ? "Weight progress by exercise" :
+      "Schedule and adherence";
+    if (currentView === "data") renderDataView();
+    if (currentView === "peptides") renderPeptideView();
+  };
+});
+
+// ---------- PEPTIDE TRACKER ----------
+const PEPTIDES = [
+  { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#c1531f" },
+  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#2f6fd1" },
+  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#22945a" },
+  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#e8b84b" },
+];
+const PEPTIDE_KEY = "ale-peptide-log-v1";
+let peptideLog = { taken: {} }; // { [id]: [dateStr, ...] }
+
+function parseUTC(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+function dayDiff(startStr, dateStr) {
+  return Math.round((parseUTC(dateStr) - parseUTC(startStr)) / 86400000);
+}
+function addDays(dateStr, n) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+function mondayOffset(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // Sun=0..Sat=6
+  return (wd + 6) % 7; // Mon=0..Sun=6
+}
+function buildGridDates(weeks) {
+  const today = todayStr();
+  const mondayThisWeek = addDays(today, -mondayOffset(today));
+  const gridStart = addDays(mondayThisWeek, -7 * (weeks - 1));
+  const dates = [];
+  for (let i = 0; i < weeks * 7; i++) dates.push(addDays(gridStart, i));
+  return dates;
+}
+function renderDayHeader() {
+  const row = document.getElementById("dayHeaderRow");
+  row.innerHTML = ["M", "T", "W", "T", "F", "S", "S"].map(l => `<div>${l}</div>`).join("");
+}
+
+function getPeptideStatus(p, dateStr) {
+  const diff = dayDiff(p.start, dateStr);
+  if (diff < 0) return { state: "not-started" };
+  if (p.pattern === "daily") return { state: "due", dayNum: diff + 1 };
+  if (p.pattern === "daily-finite") {
+    if (diff >= p.cycleDays) return { state: "complete", dayNum: p.cycleDays };
+    return { state: "due", dayNum: diff + 1, totalDays: p.cycleDays };
+  }
+  if (p.pattern === "weekly") {
+    const dayNum = Math.floor(diff / 7) + 1;
+    if (diff % 7 === 0) return { state: "due", dayNum };
+    return { state: "off", dayNum, daysUntil: 7 - (diff % 7) };
+  }
+  if (p.pattern === "5on2off") {
+    const cyclePos = diff % 7;
+    const cycleNum = Math.floor(diff / 7) + 1;
+    if (cyclePos < 5) return { state: "due", dayNum: cyclePos + 1, cycleNum, onOff: "on" };
+    return { state: "off", dayNum: cyclePos - 4, cycleNum, onOff: "off" };
+  }
+  return { state: "due" };
+}
+
+async function loadPeptideLog() {
+  try {
+    const result = await window.storage.get(PEPTIDE_KEY, false);
+    peptideLog = result && result.value ? JSON.parse(result.value) : { taken: {} };
+  } catch (e) {
+    peptideLog = { taken: {} };
+  }
+  if (!peptideLog.taken) peptideLog.taken = {};
+}
+async function savePeptideLog() {
+  try {
+    await window.storage.set(PEPTIDE_KEY, JSON.stringify(peptideLog), false);
+  } catch (e) {
+    showToast("Save failed, try again");
+  }
+}
+
+function renderPeptideView() {
+  renderDayHeader();
+  const today = todayStr();
+  const wrap = document.getElementById("peptideCards");
+  wrap.innerHTML = "";
+
+  PEPTIDES.forEach(p => {
+    const status = getPeptideStatus(p, today);
+    const takenAM = p.twiceDaily ? (peptideLog.taken[p.id] || []).includes(today + "_AM") : false;
+    const takenPM = p.twiceDaily ? (peptideLog.taken[p.id] || []).includes(today + "_PM") : false;
+    const takenToday = p.twiceDaily ? (takenAM && takenPM) : (peptideLog.taken[p.id] || []).includes(today);
+
+    const card = document.createElement("div");
+    card.className = "pep-card";
+
+    let pillHtml = "";
+    let subText = "";
+    if (status.state === "not-started") {
+      pillHtml = `<span class="pill off">Not started</span>`;
+      subText = `Starts ${p.start}`;
+    } else if (status.state === "complete") {
+      pillHtml = `<span class="pill done">Cycle complete</span>`;
+      subText = `Finished day ${status.dayNum} of ${p.cycleDays}`;
+    } else if (status.state === "off") {
+      pillHtml = `<span class="pill off">Off today</span>`;
+      subText = p.pattern === "5on2off"
+        ? `Off day ${status.dayNum} of 2 &middot; cycle ${status.cycleNum}`
+        : `Next dose in ${status.daysUntil} day${status.daysUntil === 1 ? "" : "s"}`;
+    } else if (p.twiceDaily) {
+      pillHtml = takenToday
+        ? `<span class="pill taken">Both doses taken</span>`
+        : (takenAM || takenPM)
+          ? `<span class="pill taken">1 of 2 taken</span>`
+          : `<span class="pill due">Due today</span>`;
+      subText = `Day ${status.dayNum}`;
+    } else if (takenToday) {
+      pillHtml = `<span class="pill taken">Taken today</span>`;
+      subText = p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}`
+        : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}`
+        : p.pattern === "weekly" ? `Week ${status.dayNum}`
+        : `Day ${status.dayNum}`;
+    } else {
+      pillHtml = `<span class="pill due">Due today</span>`;
+      subText = p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}`
+        : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}`
+        : p.pattern === "weekly" ? `Week ${status.dayNum}`
+        : `Day ${status.dayNum}`;
+    }
+
+    card.innerHTML = `
+      <div class="pep-top">
+        <div>
+          <div class="pep-name" style="color:${p.color}">${p.name}</div>
+          <div class="pep-sub">${p.dose} &middot; ${subText}</div>
+        </div>
+        ${pillHtml}
+      </div>
+    `;
+
+    if (status.state === "due" && p.twiceDaily) {
+      const actions = document.createElement("div");
+      actions.className = "pep-actions";
+      actions.innerHTML = `
+        <button class="pep-btn ${takenAM ? 'done-btn' : ''}" data-slot="AM">${takenAM ? 'AM done' : 'Mark AM'}</button>
+        <button class="pep-btn ${takenPM ? 'done-btn' : ''}" data-slot="PM">${takenPM ? 'PM done' : 'Mark PM'}</button>
+      `;
+      actions.querySelectorAll("button").forEach(btn => {
+        btn.onclick = async () => {
+          const key = today + "_" + btn.dataset.slot;
+          if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
+          const idx = peptideLog.taken[p.id].indexOf(key);
+          if (idx >= 0) peptideLog.taken[p.id].splice(idx, 1);
+          else peptideLog.taken[p.id].push(key);
+          await savePeptideLog();
+          renderPeptideView();
+        };
+      });
+      card.appendChild(actions);
+    } else if (status.state === "due" || status.state === "off") {
+      const actions = document.createElement("div");
+      actions.className = "pep-actions";
+      const canToggle = status.state === "due";
+      actions.innerHTML = `<button class="pep-btn ${takenToday ? 'done-btn' : ''}" ${canToggle ? '' : 'disabled style="opacity:0.4"'}>${takenToday ? 'Mark not taken' : 'Mark taken'}</button>`;
+      if (canToggle) {
+        actions.querySelector("button").onclick = async () => {
+          if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
+          const idx = peptideLog.taken[p.id].indexOf(today);
+          if (idx >= 0) peptideLog.taken[p.id].splice(idx, 1);
+          else peptideLog.taken[p.id].push(today);
+          await savePeptideLog();
+          renderPeptideView();
+        };
+      }
+      card.appendChild(actions);
+    }
+
+    const dotsWrap = document.createElement("div");
+    dotsWrap.className = "dots";
+    const gridDates = buildGridDates(3);
+    gridDates.forEach(d => {
+      const dStatus = getPeptideStatus(p, d);
+      const dot = document.createElement("div");
+      let cls = "dot";
+      if (dStatus.state !== "due") {
+        cls += " na";
+      } else if (p.twiceDaily) {
+        const amDone = (peptideLog.taken[p.id] || []).includes(d + "_AM");
+        const pmDone = (peptideLog.taken[p.id] || []).includes(d + "_PM");
+        if (amDone && pmDone) cls += " taken";
+        else if (amDone || pmDone) cls += " partial";
+      } else {
+        const wasTaken = (peptideLog.taken[p.id] || []).includes(d);
+        if (wasTaken) cls += " taken";
+      }
+      dot.className = cls;
+      dot.title = d;
+      dotsWrap.appendChild(dot);
+    });
+    card.appendChild(dotsWrap);
+
+    const allTaken = (peptideLog.taken[p.id] || []).slice().sort().reverse();
+    if (allTaken.length) {
+      const expand = document.createElement("div");
+      expand.className = "expand";
+      expand.style.marginTop = "10px";
+      allTaken.forEach(key => {
+        const [dateStr, slot] = key.split("_");
+        const row = document.createElement("div");
+        row.className = "entry-row";
+        row.innerHTML = `<span>${dateStr}${slot ? ' &middot; ' + slot : ''}</span><span class="del">Delete</span>`;
+        row.querySelector(".del").onclick = async (ev) => {
+          ev.stopPropagation();
+          peptideLog.taken[p.id] = peptideLog.taken[p.id].filter(k => k !== key);
+          await savePeptideLog();
+          renderPeptideView();
+        };
+        expand.appendChild(row);
+      });
+      card.appendChild(expand);
+      card.querySelector(".pep-top").style.cursor = "pointer";
+      card.querySelector(".pep-top").onclick = () => { expand.classList.toggle("open"); };
+    }
+
+    wrap.appendChild(card);
+  });
+}
+
+// ---------- DATA VIEW (progress chart) ----------
+function populateExerciseSelect() {
+  const select = document.getElementById("exerciseSelect");
+  const allExercises = [...new Set(Object.values(DAYS).flatMap(d => d.exercises))];
+  select.innerHTML = allExercises.map(e => `<option value="${e}">${e}</option>`).join("");
+  select.onchange = renderChart;
+}
+
+function renderChart() {
+  const name = document.getElementById("exerciseSelect").value;
+  const entries = getExerciseLogs(name).slice().sort((a, b) => a.date.localeCompare(b.date));
+  const wrap = document.getElementById("chartWrap");
+
+  if (!entries.length) {
+    wrap.innerHTML = `<div class="chart-card"><div class="empty">No entries yet for ${name}</div></div>`;
+    return;
+  }
+
+  const pr = entries.reduce((max, e) => e.weight > max.weight ? e : max, entries[0]);
+  const latest = entries[entries.length - 1];
+
+  const w = 300, h = 140, pad = 10;
+  const weights = entries.map(e => e.weight);
+  const minW = Math.min(...weights) * 0.95;
+  const maxW = Math.max(...weights) * 1.05;
+  const range = maxW - minW || 1;
+
+  const points = entries.map((e, i) => {
+    const x = pad + (i / Math.max(entries.length - 1, 1)) * (w - pad * 2);
+    const y = h - pad - ((e.weight - minW) / range) * (h - pad * 2);
+    return [x, y];
+  });
+  const pathD = points.map((pt, i) => (i === 0 ? "M" : "L") + pt[0].toFixed(1) + "," + pt[1].toFixed(1)).join(" ");
+  const dotsSvg = points.map(pt => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="3" fill="#e8b84b"/>`).join("");
+
+  wrap.innerHTML = `
+    <div class="chart-card">
+      <div class="chart-stats">
+        <div><div class="chart-stat-label">PR</div><div class="chart-stat-val" style="color:var(--gold)">${pr.weight}</div></div>
+        <div><div class="chart-stat-label">Latest</div><div class="chart-stat-val">${latest.weight}</div></div>
+        <div><div class="chart-stat-label">Sessions</div><div class="chart-stat-val">${entries.length}</div></div>
+      </div>
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:140px; overflow:visible;">
+        <path d="${pathD}" fill="none" stroke="#e8b84b" stroke-width="2"/>
+        ${dotsSvg}
+      </svg>
+    </div>
+  `;
+}
+
+function renderDataView() {
+  populateExerciseSelect();
+  renderChart();
+}
+
+async function init() {
+  await loadLogs();
+  await loadPeptideLog();
+}
+init();
+
+</script>
+
+</body>
+</html>
