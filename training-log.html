@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0d12">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACHElEQVR4nO3dsU3DUBRAUYLoojRpMkCmYIMswDBMwDAswAZMkQGyBQVINLmSFYf4R5xT2/q/uHrNk+XVerN9gHMel74A4xIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIH6WnpC/w6vj/PeX3/8nmtm/DN5CCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJg/SHK/uJK/irr9qXOvdmdm+H6Q+fXj8uPsjkIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDNNBX9v/Kzdbuc5gcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQrOwvdxdr9zlMDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SKv1Zrv0HX5M/HFfud8f+g3L5CCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgzTQyp7RmBwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRykL/qDFuw2ii8nAAAAAElFTkSuQmCC">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACNUlEQVR4nO3dwU3DMABAUYK4Vb10BaZgEKZkEKZgF26c+NSREpmk752jtLG+nCq2muVyvT3Bb55nfwH+L3GQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEF62eOkXx9vfx/w+v65x+ee2JQhXTZ/Gc/dy/ghkUGzhnTj28r4Zaw9+GFNHFK/OUjiIImDJA6SOEjiIImDJA6SOEjiIO2y8DZu8HHv+VZhDrF0YOYgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgTd59PugQe7XPx8xBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBOsaqrP8Em8LMQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQZq8+/x828oHjV/4xH3qZg6SOEjiIImDJA6SOEjiIImDJA6SOEgbx7HqcfjDPjtfZeKQmjlIy+V62/ykd9eKzBlrTRnSXeLgHNxWSOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgfQNT0i3YG6OvoAAAAABJRU5ErkJggg==">
 <title>Training Log</title>
 <style>
   :root {
@@ -298,6 +298,11 @@
 <header>
   <h1>Training Log</h1>
   <p id="daylabel">Loading...</p>
+  <div style="display:flex; gap:10px; margin-top:10px;">
+    <button id="exportBtn" style="background:var(--card); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700;">Export backup</button>
+    <button id="importBtn" style="background:var(--card); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700;">Import backup</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
 </header>
 
 <div class="navbar" id="navbar">
@@ -366,8 +371,8 @@ function todayStr() {
 
 async function loadLogs() {
   try {
-    const result = await window.storage.get(STORAGE_KEY, false);
-    logs = result && result.value ? JSON.parse(result.value) : [];
+    const value = localStorage.getItem(STORAGE_KEY);
+    logs = value ? JSON.parse(value) : [];
   } catch (e) {
     logs = [];
   }
@@ -377,7 +382,7 @@ async function loadLogs() {
 
 async function saveLogs() {
   try {
-    await window.storage.set(STORAGE_KEY, JSON.stringify(logs), false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
   } catch (e) {
     showToast("Save failed, try again");
   }
@@ -579,8 +584,8 @@ function getPeptideStatus(p, dateStr) {
 
 async function loadPeptideLog() {
   try {
-    const result = await window.storage.get(PEPTIDE_KEY, false);
-    peptideLog = result && result.value ? JSON.parse(result.value) : { taken: {} };
+    const value = localStorage.getItem(PEPTIDE_KEY);
+    peptideLog = value ? JSON.parse(value) : { taken: {} };
   } catch (e) {
     peptideLog = { taken: {} };
   }
@@ -588,7 +593,7 @@ async function loadPeptideLog() {
 }
 async function savePeptideLog() {
   try {
-    await window.storage.set(PEPTIDE_KEY, JSON.stringify(peptideLog), false);
+    localStorage.setItem(PEPTIDE_KEY, JSON.stringify(peptideLog));
   } catch (e) {
     showToast("Save failed, try again");
   }
@@ -801,6 +806,40 @@ async function init() {
   await loadPeptideLog();
 }
 init();
+
+document.getElementById("exportBtn").onclick = () => {
+  const data = { trainingLogs: logs, peptideLog: peptideLog, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "training-log-backup-" + todayStr() + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Backup downloaded");
+};
+
+document.getElementById("importBtn").onclick = () => {
+  document.getElementById("importFile").click();
+};
+
+document.getElementById("importFile").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (data.trainingLogs) logs = data.trainingLogs;
+    if (data.peptideLog) peptideLog = data.peptideLog;
+    await saveLogs();
+    await savePeptideLog();
+    render();
+    showToast("Backup restored");
+  } catch (err) {
+    showToast("Import failed, bad file");
+  }
+  e.target.value = "";
+};
 
 </script>
 
