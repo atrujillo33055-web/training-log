@@ -405,28 +405,28 @@
 
 <script>
 const DAYS = {
-  "Push A": { type: "push", subtitle: "Chest emphasis: flat", exercises: [
-    "Machine Flat Press", "OHE", "Incline Machine Press", "Tricep Pushdown", "Single Arm Machine Lateral Raise"
-  ]},
   "Pull A": { type: "pull", subtitle: "Verticals + traps + rear delts", exercises: [
-    "Pull Ups", "Rear Delt Fly", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Preacher Curl", "Behind the Body Cable Curl"
+    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Rear Delt Fly", "Preacher Curl", "Incline Dumbbell Curl"
+  ]},
+  "Push A": { type: "push", subtitle: "Chest emphasis: flat", exercises: [
+    "Machine Flat Press", "Incline Machine Press", "Single Arm Machine Lateral Raise", "OHE", "Tricep Pushdown"
   ]},
   "Legs A": { type: "legs", subtitle: "Hip dominant", exercises: [
     "RDL", "Hack Squat", "Leg Curl", "Hip Adduction/Abduction", "Standing Calf Raise", "Cable Crunch"
   ]},
-  "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
-    "Incline Machine Press", "OHE", "Machine Flat Press", "Single Arm Lat Raise", "Chest Fly"
-  ]},
   "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
-    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Rear Delt Fly", "Seated Cable Row", "Shrugs", "Incline Curl", "Hammer Curl"
+    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Seated Cable Row", "Shrugs", "Rear Delt Fly", "Incline Curl", "Hammer Curl"
+  ]},
+  "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
+    "Incline Machine Press", "Machine Flat Press", "Chest Fly", "OHE", "Single Arm Lat Raise"
   ]},
   "Legs B": { type: "legs", subtitle: "Quad dominant", exercises: [
-    "Hack Squat", "Leg Curl", "Leg Extension", "Seated Calf", "Cable Crunch"
+    "Hack Squat", "Leg Extension", "Leg Curl", "Seated Calf", "Cable Crunch"
   ]},
 };
 
 let logs = [];
-let currentDay = "Push A";
+let currentDay = "Pull A";
 let sessionDate = todayStr();
 let storageReady = false;
 const STORAGE_KEY = "ale-training-logs-v1";
