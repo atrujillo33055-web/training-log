@@ -330,6 +330,11 @@
 </div>
 
 <div id="peptideView" style="display:none; padding: 16px 18px 0;">
+  <div style="margin-bottom: 14px;">
+    <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">LOGGING FOR</label>
+    <input type="date" id="peptideDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
+    <div style="color: var(--sub); font-size: 10.5px; margin-top: 5px;">Past midnight before bed? Set this back one day before marking taken.</div>
+  </div>
   <div class="day-header-row" id="dayHeaderRow"></div>
   <div id="peptideCards"></div>
 </div>
@@ -601,7 +606,10 @@ async function savePeptideLog() {
 
 function renderPeptideView() {
   renderDayHeader();
-  const today = todayStr();
+  const dateInput = document.getElementById("peptideDate");
+  if (!dateInput.value) dateInput.value = todayStr();
+  dateInput.onchange = () => renderPeptideView();
+  const today = dateInput.value;
   const wrap = document.getElementById("peptideCards");
   wrap.innerHTML = "";
 
