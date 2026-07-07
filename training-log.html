@@ -254,15 +254,23 @@
     border-radius: 6px;
     background: var(--card-hi);
     border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sub);
   }
-  .dot.taken { background: #22945a; border-color: #22945a; }
+  .dot.taken { background: #22945a; border-color: #22945a; color: #ffffff; }
   .dot.partial {
     background: linear-gradient(90deg, #22945a 50%, var(--card-hi) 50%);
     border-color: var(--line);
+    color: var(--text);
   }
   .dot.na {
     background: repeating-linear-gradient(135deg, var(--card-hi), var(--card-hi) 3px, #1b1e26 3px, #1b1e26 6px);
     border: 1px dashed var(--line);
+    color: #4a4f5c;
   }
   .day-header-row {
     display: grid;
@@ -291,6 +299,30 @@
   }
   .chart-stat-label { color: var(--sub); font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
   .chart-stat-val { font-size: 20px; font-weight: 800; margin-top: 2px; }
+
+  .subtabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .subtab {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--sub);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .subtab.active {
+    color: var(--text);
+    border-color: var(--gold);
+    background: var(--card-hi);
+  }
+  .entry-row .edit { color: var(--gold); font-weight: 700; margin-right: 14px; }
 </style>
 </head>
 <body>
@@ -319,14 +351,44 @@
   <input type="date" id="sessionDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
 </div>
 
+<div style="padding: 12px 18px 0;">
+  <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">SESSION NOTES</label>
+  <textarea id="sessionNotes" placeholder="How'd it feel today?" style="width:100%; background: var(--card); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:10px; font-size:13px; font-family:inherit; min-height:50px; resize:vertical;"></textarea>
+</div>
+
 <main id="main">
   <div class="loading">Loading your log...</div>
 </main>
 </div>
 
 <div id="dataView" style="display:none; padding: 16px 18px 0;">
-  <select id="exerciseSelect" style="width:100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 14px;"></select>
-  <div id="chartWrap"></div>
+  <div class="subtabs" id="dataSubtabs">
+    <div class="subtab active" data-sub="exercises">Exercises</div>
+    <div class="subtab" data-sub="weight">Weight</div>
+    <div class="subtab" data-sub="summary">Summary</div>
+  </div>
+
+  <div id="exercisesSub">
+    <select id="exerciseSelect" style="width:100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 14px;"></select>
+    <div id="chartWrap"></div>
+  </div>
+
+  <div id="weightSub" style="display:none;">
+    <div style="padding-bottom: 14px;">
+      <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">LOG WEIGHT</label>
+      <div style="display:flex; gap:8px;">
+        <input type="date" id="weightDate" style="flex:1.3; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size:14px;">
+        <input type="number" inputmode="decimal" id="weightInput" placeholder="lbs" style="flex:1; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size:14px; text-align:center;">
+        <button id="weightLogBtn" style="background: var(--text); color:#0b0d12; border:none; border-radius:8px; font-weight:800; font-size:13px; padding:0 16px;">Log</button>
+      </div>
+    </div>
+    <div id="weightChartWrap"></div>
+    <div id="weightHistoryWrap" style="margin-top:14px;"></div>
+  </div>
+
+  <div id="summarySub" style="display:none;">
+    <div id="summaryWrap"></div>
+  </div>
 </div>
 
 <div id="peptideView" style="display:none; padding: 16px 18px 0;">
@@ -344,22 +406,22 @@
 <script>
 const DAYS = {
   "Push A": { type: "push", subtitle: "Chest emphasis: flat", exercises: [
-    "Machine Flat Press", "Incline Machine Press", "Cable Lateral Raise", "OHE", "Tricep Pushdown"
-  ]},
-  "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
-    "Incline Machine Press", "Machine Flat Press", "Chest Fly", "OHE", "Single Arm Lat Raise"
+    "Machine Flat Press", "OHE", "Incline Machine Press", "Tricep Pushdown", "Cable Lateral Raise"
   ]},
   "Pull A": { type: "pull", subtitle: "Verticals + traps + rear delts", exercises: [
-    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Rear Delt Fly", "Preacher Curl", "Behind the Body Cable Curl"
-  ]},
-  "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
-    "Chest Supported Row", "Kelso Shrug", "Seated Cable Row", "Shrugs", "Rear Delt Fly", "Incline Curl", "Hammer Curl"
+    "Pull Ups", "Rear Delt Fly", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Preacher Curl", "Behind the Body Cable Curl"
   ]},
   "Legs A": { type: "legs", subtitle: "Hip dominant", exercises: [
     "RDL", "Hack Squat", "Leg Curl", "Hip Adduction/Abduction", "Standing Calf Raise", "Cable Crunch"
   ]},
+  "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
+    "Incline Machine Press", "OHE", "Machine Flat Press", "Single Arm Lat Raise", "Chest Fly"
+  ]},
+  "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
+    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Rear Delt Fly", "Seated Cable Row", "Shrugs", "Incline Curl", "Hammer Curl"
+  ]},
   "Legs B": { type: "legs", subtitle: "Quad dominant", exercises: [
-    "Hack Squat", "Leg Extension", "Leg Curl", "Seated Calf", "Cable Crunch"
+    "Hack Squat", "Leg Curl", "Leg Extension", "Seated Calf", "Cable Crunch"
   ]},
 };
 
@@ -368,10 +430,29 @@ let currentDay = "Push A";
 let sessionDate = todayStr();
 let storageReady = false;
 const STORAGE_KEY = "ale-training-logs-v1";
+let sessionNotes = {};
+const NOTES_KEY = "ale-session-notes-v1";
+let pendingEdit = null;
 
 function todayStr() {
   const d = new Date();
   return d.toISOString().slice(0, 10);
+}
+
+async function loadNotes() {
+  try {
+    const value = localStorage.getItem(NOTES_KEY);
+    sessionNotes = value ? JSON.parse(value) : {};
+  } catch (e) {
+    sessionNotes = {};
+  }
+}
+async function saveNotes() {
+  try {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(sessionNotes));
+  } catch (e) {
+    showToast("Save failed, try again");
+  }
 }
 
 async function loadLogs() {
@@ -428,7 +509,15 @@ function render() {
   renderTabs();
   const dateInput = document.getElementById("sessionDate");
   if (!dateInput.value) dateInput.value = sessionDate;
-  dateInput.onchange = () => { sessionDate = dateInput.value; };
+  dateInput.onchange = () => { sessionDate = dateInput.value; render(); };
+
+  const notesInput = document.getElementById("sessionNotes");
+  const noteKey = sessionDate + "_" + currentDay;
+  notesInput.value = sessionNotes[noteKey] || "";
+  notesInput.oninput = () => {
+    sessionNotes[noteKey] = notesInput.value;
+    saveNotes();
+  };
 
   const info = DAYS[currentDay];
   document.getElementById("daylabel").textContent = info.subtitle;
@@ -468,6 +557,11 @@ function render() {
     const wInput = logrow.querySelector(".w-input");
     const rInput = logrow.querySelector(".r-input");
     const btn = logrow.querySelector(".log-btn");
+    if (pendingEdit && pendingEdit.exercise === name) {
+      wInput.value = pendingEdit.weight;
+      rInput.value = pendingEdit.reps || "";
+      pendingEdit = null;
+    }
     btn.onclick = async () => {
       const weight = parseFloat(wInput.value);
       const reps = rInput.value ? parseInt(rInput.value) : null;
@@ -487,7 +581,15 @@ function render() {
       allHistory.forEach(e => {
         const row = document.createElement("div");
         row.className = "entry-row";
-        row.innerHTML = `<span>${e.date} &middot; ${e.weight}${e.reps ? ' x ' + e.reps : ''}</span><span class="del">Delete</span>`;
+        row.innerHTML = `<span>${e.date} &middot; ${e.weight}${e.reps ? ' x ' + e.reps : ''}</span><span><span class="edit">Edit</span><span class="del">Delete</span></span>`;
+        row.querySelector(".edit").onclick = async (ev) => {
+          ev.stopPropagation();
+          pendingEdit = { exercise: name, weight: e.weight, reps: e.reps };
+          logs = logs.filter(l => l.id !== e.id);
+          await saveLogs();
+          render();
+          showToast("Edit the values, then hit Log");
+        };
         row.querySelector(".del").onclick = async (ev) => {
           ev.stopPropagation();
           logs = logs.filter(l => l.id !== e.id);
@@ -587,12 +689,26 @@ function getPeptideStatus(p, dateStr) {
   return { state: "due" };
 }
 
+const DEFAULT_PEPTIDE_LOG = {
+  taken: {
+    ghk: ["2026-07-02", "2026-07-03", "2026-07-04", "2026-07-05", "2026-07-06"],
+    reta: ["2026-07-01"],
+    tesa: ["2026-07-03", "2026-07-04", "2026-07-05", "2026-07-06"],
+    ipam: [
+      "2026-07-03_PM",
+      "2026-07-04_AM", "2026-07-04_PM",
+      "2026-07-05_AM", "2026-07-05_PM",
+      "2026-07-06_AM", "2026-07-06_PM"
+    ]
+  }
+};
+
 async function loadPeptideLog() {
   try {
     const value = localStorage.getItem(PEPTIDE_KEY);
-    peptideLog = value ? JSON.parse(value) : { taken: {} };
+    peptideLog = value ? JSON.parse(value) : JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_LOG));
   } catch (e) {
-    peptideLog = { taken: {} };
+    peptideLog = JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_LOG));
   }
   if (!peptideLog.taken) peptideLog.taken = {};
 }
@@ -723,6 +839,7 @@ function renderPeptideView() {
       }
       dot.className = cls;
       dot.title = d;
+      dot.textContent = String(parseInt(d.slice(8, 10), 10));
       dotsWrap.appendChild(dot);
     });
     card.appendChild(dotsWrap);
@@ -809,14 +926,174 @@ function renderDataView() {
   renderChart();
 }
 
+// ---------- DATA SUB-TABS ----------
+let dataSubview = "exercises";
+document.getElementById("dataSubtabs").querySelectorAll(".subtab").forEach(tab => {
+  tab.onclick = () => {
+    dataSubview = tab.dataset.sub;
+    document.querySelectorAll("#dataSubtabs .subtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("exercisesSub").style.display = dataSubview === "exercises" ? "" : "none";
+    document.getElementById("weightSub").style.display = dataSubview === "weight" ? "" : "none";
+    document.getElementById("summarySub").style.display = dataSubview === "summary" ? "" : "none";
+    if (dataSubview === "exercises") renderDataView();
+    if (dataSubview === "weight") renderWeightView();
+    if (dataSubview === "summary") renderSummaryView();
+  };
+});
+
+// ---------- BODY WEIGHT TRACKER ----------
+let bodyweightLog = [];
+const WEIGHT_KEY = "ale-bodyweight-log-v1";
+
+async function loadWeightLog() {
+  try {
+    const value = localStorage.getItem(WEIGHT_KEY);
+    bodyweightLog = value ? JSON.parse(value) : [];
+  } catch (e) {
+    bodyweightLog = [];
+  }
+}
+async function saveWeightLog() {
+  try {
+    localStorage.setItem(WEIGHT_KEY, JSON.stringify(bodyweightLog));
+  } catch (e) {
+    showToast("Save failed, try again");
+  }
+}
+
+function renderWeightView() {
+  const dateInput = document.getElementById("weightDate");
+  if (!dateInput.value) dateInput.value = todayStr();
+  const input = document.getElementById("weightInput");
+  const btn = document.getElementById("weightLogBtn");
+  btn.onclick = async () => {
+    const weight = parseFloat(input.value);
+    if (!weight) { showToast("Enter a weight"); return; }
+    const date = dateInput.value;
+    bodyweightLog = bodyweightLog.filter(w => w.date !== date);
+    bodyweightLog.push({ date, weight });
+    input.value = "";
+    await saveWeightLog();
+    showToast("Weight logged");
+    renderWeightView();
+  };
+
+  const entries = bodyweightLog.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const chartWrap = document.getElementById("weightChartWrap");
+  if (!entries.length) {
+    chartWrap.innerHTML = `<div class="chart-card"><div class="empty">No weight logged yet</div></div>`;
+  } else {
+    const latest = entries[entries.length - 1];
+    const first = entries[0];
+    const change = (latest.weight - first.weight).toFixed(1);
+    const changeColor = change < 0 ? "#22945a" : change > 0 ? "#c1531f" : "var(--text)";
+    const w = 300, h = 140, pad = 10;
+    const weights = entries.map(e => e.weight);
+    const minW = Math.min(...weights) - 1;
+    const maxW = Math.max(...weights) + 1;
+    const range = maxW - minW || 1;
+    const points = entries.map((e, i) => {
+      const x = pad + (i / Math.max(entries.length - 1, 1)) * (w - pad * 2);
+      const y = h - pad - ((e.weight - minW) / range) * (h - pad * 2);
+      return [x, y];
+    });
+    const pathD = points.map((pt, i) => (i === 0 ? "M" : "L") + pt[0].toFixed(1) + "," + pt[1].toFixed(1)).join(" ");
+    const dotsSvg = points.map(pt => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="3" fill="#e8b84b"/>`).join("");
+    chartWrap.innerHTML = `
+      <div class="chart-card">
+        <div class="chart-stats">
+          <div><div class="chart-stat-label">Latest</div><div class="chart-stat-val">${latest.weight}</div></div>
+          <div><div class="chart-stat-label">Change</div><div class="chart-stat-val" style="color:${changeColor}">${change > 0 ? '+' : ''}${change}</div></div>
+          <div><div class="chart-stat-label">Entries</div><div class="chart-stat-val">${entries.length}</div></div>
+        </div>
+        <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:140px; overflow:visible;">
+          <path d="${pathD}" fill="none" stroke="#e8b84b" stroke-width="2"/>
+          ${dotsSvg}
+        </svg>
+      </div>
+    `;
+  }
+
+  const histWrap = document.getElementById("weightHistoryWrap");
+  histWrap.innerHTML = "";
+  entries.slice().reverse().forEach(e => {
+    const row = document.createElement("div");
+    row.className = "entry-row";
+    row.innerHTML = `<span>${e.date} &middot; ${e.weight} lbs</span><span class="del">Delete</span>`;
+    row.querySelector(".del").onclick = async () => {
+      bodyweightLog = bodyweightLog.filter(w => w.date !== e.date);
+      await saveWeightLog();
+      renderWeightView();
+    };
+    histWrap.appendChild(row);
+  });
+}
+
+// ---------- WEEKLY SUMMARY ----------
+function renderSummaryView() {
+  const wrap = document.getElementById("summaryWrap");
+  const today = todayStr();
+  const weekAgo = addDays(today, -6);
+
+  const sessionDates = new Set(logs.filter(l => l.date >= weekAgo && l.date <= today).map(l => l.date));
+  const sessionsCount = sessionDates.size;
+
+  let dueCount = 0, takenCount = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(today, -i);
+    PEPTIDES.forEach(p => {
+      const status = getPeptideStatus(p, d);
+      if (status.state === "due") {
+        if (p.twiceDaily) {
+          dueCount += 2;
+          if ((peptideLog.taken[p.id] || []).includes(d + "_AM")) takenCount++;
+          if ((peptideLog.taken[p.id] || []).includes(d + "_PM")) takenCount++;
+        } else {
+          dueCount += 1;
+          if ((peptideLog.taken[p.id] || []).includes(d)) takenCount++;
+        }
+      }
+    });
+  }
+  const adherence = dueCount ? Math.round((takenCount / dueCount) * 100) : 100;
+
+  const weightEntries = bodyweightLog.filter(w => w.date >= weekAgo && w.date <= today).sort((a, b) => a.date.localeCompare(b.date));
+  let weightTrendHtml = `<span style="color:var(--sub); font-size:13px;">No weight logged this week</span>`;
+  if (weightEntries.length >= 2) {
+    const change = (weightEntries[weightEntries.length - 1].weight - weightEntries[0].weight).toFixed(1);
+    const color = change < 0 ? "#22945a" : change > 0 ? "#c1531f" : "var(--text)";
+    weightTrendHtml = `<span style="color:${color}">${change > 0 ? '+' : ''}${change} lbs</span> this week`;
+  } else if (weightEntries.length === 1) {
+    weightTrendHtml = `${weightEntries[0].weight} lbs logged, need another entry for a trend`;
+  }
+
+  wrap.innerHTML = `
+    <div class="chart-card" style="margin-bottom:12px;">
+      <div class="chart-stat-label">Sessions this week</div>
+      <div class="chart-stat-val" style="font-size:28px;">${sessionsCount}</div>
+    </div>
+    <div class="chart-card" style="margin-bottom:12px;">
+      <div class="chart-stat-label">Peptide adherence</div>
+      <div class="chart-stat-val" style="font-size:28px; color:var(--gold);">${adherence}%</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-stat-label">Weight trend</div>
+      <div style="font-size:15px; font-weight:700; margin-top:4px;">${weightTrendHtml}</div>
+    </div>
+  `;
+}
+
 async function init() {
   await loadLogs();
   await loadPeptideLog();
+  await loadWeightLog();
+  await loadNotes();
 }
 init();
 
 document.getElementById("exportBtn").onclick = () => {
-  const data = { trainingLogs: logs, peptideLog: peptideLog, exportedAt: new Date().toISOString() };
+  const data = { trainingLogs: logs, peptideLog: peptideLog, bodyweightLog: bodyweightLog, sessionNotes: sessionNotes, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -839,8 +1116,12 @@ document.getElementById("importFile").onchange = async (e) => {
     const data = JSON.parse(text);
     if (data.trainingLogs) logs = data.trainingLogs;
     if (data.peptideLog) peptideLog = data.peptideLog;
+    if (data.bodyweightLog) bodyweightLog = data.bodyweightLog;
+    if (data.sessionNotes) sessionNotes = data.sessionNotes;
     await saveLogs();
     await savePeptideLog();
+    await saveWeightLog();
+    await saveNotes();
     render();
     showToast("Backup restored");
   } catch (err) {
