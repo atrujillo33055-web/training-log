@@ -254,23 +254,15 @@
     border-radius: 6px;
     background: var(--card-hi);
     border: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--sub);
   }
-  .dot.taken { background: #22945a; border-color: #22945a; color: #ffffff; }
+  .dot.taken { background: #22945a; border-color: #22945a; }
   .dot.partial {
     background: linear-gradient(90deg, #22945a 50%, var(--card-hi) 50%);
     border-color: var(--line);
-    color: var(--text);
   }
   .dot.na {
     background: repeating-linear-gradient(135deg, var(--card-hi), var(--card-hi) 3px, #1b1e26 3px, #1b1e26 6px);
     border: 1px dashed var(--line);
-    color: #4a4f5c;
   }
   .day-header-row {
     display: grid;
@@ -299,30 +291,6 @@
   }
   .chart-stat-label { color: var(--sub); font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
   .chart-stat-val { font-size: 20px; font-weight: 800; margin-top: 2px; }
-
-  .subtabs {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin-bottom: 14px;
-  }
-  .subtab {
-    text-align: center;
-    padding: 8px 4px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--sub);
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  .subtab.active {
-    color: var(--text);
-    border-color: var(--gold);
-    background: var(--card-hi);
-  }
-  .entry-row .edit { color: var(--gold); font-weight: 700; margin-right: 14px; }
 </style>
 </head>
 <body>
@@ -330,6 +298,7 @@
 <header>
   <h1>Training Log</h1>
   <p id="daylabel">Loading...</p>
+  <p id="clocklabel" style="color: var(--sub); font-size: 11px; margin-top: 2px;"></p>
   <div style="display:flex; gap:10px; margin-top:10px;">
     <button id="exportBtn" style="background:var(--card); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700;">Export backup</button>
     <button id="importBtn" style="background:var(--card); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700;">Import backup</button>
@@ -346,14 +315,12 @@
 <div id="logView">
 <div class="tabs" id="tabs"></div>
 
-<div style="padding: 12px 18px 0;">
-  <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">SESSION DATE</label>
-  <input type="date" id="sessionDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
-</div>
-
-<div style="padding: 12px 18px 0;">
-  <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">SESSION NOTES</label>
-  <textarea id="sessionNotes" placeholder="How'd it feel today?" style="width:100%; background: var(--card); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:10px; font-size:13px; font-family:inherit; min-height:50px; resize:vertical;"></textarea>
+<div style="padding: 12px 18px 0; display:flex; justify-content:space-between; align-items:flex-end; gap:10px;">
+  <div style="flex:1;">
+    <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">SESSION DATE</label>
+    <input type="date" id="sessionDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
+  </div>
+  <button id="editExercisesBtn" style="background:var(--card); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:10px 14px; font-size:12.5px; font-weight:700; white-space:nowrap;">Edit</button>
 </div>
 
 <main id="main">
@@ -362,33 +329,8 @@
 </div>
 
 <div id="dataView" style="display:none; padding: 16px 18px 0;">
-  <div class="subtabs" id="dataSubtabs">
-    <div class="subtab active" data-sub="exercises">Exercises</div>
-    <div class="subtab" data-sub="weight">Weight</div>
-    <div class="subtab" data-sub="summary">Summary</div>
-  </div>
-
-  <div id="exercisesSub">
-    <select id="exerciseSelect" style="width:100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 14px;"></select>
-    <div id="chartWrap"></div>
-  </div>
-
-  <div id="weightSub" style="display:none;">
-    <div style="padding-bottom: 14px;">
-      <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">LOG WEIGHT</label>
-      <div style="display:flex; gap:8px;">
-        <input type="date" id="weightDate" style="flex:1.3; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size:14px;">
-        <input type="number" inputmode="decimal" id="weightInput" placeholder="lbs" style="flex:1; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size:14px; text-align:center;">
-        <button id="weightLogBtn" style="background: var(--text); color:#0b0d12; border:none; border-radius:8px; font-weight:800; font-size:13px; padding:0 16px;">Log</button>
-      </div>
-    </div>
-    <div id="weightChartWrap"></div>
-    <div id="weightHistoryWrap" style="margin-top:14px;"></div>
-  </div>
-
-  <div id="summarySub" style="display:none;">
-    <div id="summaryWrap"></div>
-  </div>
+  <div class="tabs" id="dataTabs" style="padding:0 0 12px;"></div>
+  <div id="dataList"></div>
 </div>
 
 <div id="peptideView" style="display:none; padding: 16px 18px 0;">
@@ -404,64 +346,202 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const DAYS = {
-  "Pull A": { type: "pull", subtitle: "Verticals + traps + rear delts", exercises: [
-    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Rear Delt Fly", "Preacher Curl", "Incline Dumbbell Curl"
-  ]},
+const DEFAULT_DAYS = {
   "Push A": { type: "push", subtitle: "Chest emphasis: flat", exercises: [
-    "Machine Flat Press", "Incline Machine Press", "Single Arm Machine Lateral Raise", "OHE", "Tricep Pushdown"
-  ]},
-  "Legs A": { type: "legs", subtitle: "Hip dominant", exercises: [
-    "RDL", "Hack Squat", "Leg Curl", "Hip Adduction/Abduction", "Standing Calf Raise", "Cable Crunch"
-  ]},
-  "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
-    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Seated Cable Row", "Shrugs", "Rear Delt Fly", "Incline Curl", "Hammer Curl"
+    "Machine Flat Press", "Incline Machine Press", "Cable Lateral Raise", "OHE", "Tricep Pushdown"
   ]},
   "Push B": { type: "push", subtitle: "Chest emphasis: incline", exercises: [
     "Incline Machine Press", "Machine Flat Press", "Chest Fly", "OHE", "Single Arm Lat Raise"
+  ]},
+  "Pull A": { type: "pull", subtitle: "Verticals + traps + rear delts", exercises: [
+    "Pull Ups", "Chest Supported Row", "Kelso Shrug", "Shrugs", "Rear Delt Fly", "Preacher Curl", "Behind the Body Cable Curl"
+  ]},
+  "Pull B": { type: "pull", subtitle: "Horizontals + traps + rear delts", exercises: [
+    "Chest Supported Row", "Kelso Shrug", "Seated Cable Row", "Shrugs", "Rear Delt Fly", "Incline Curl", "Hammer Curl"
+  ]},
+  "Legs A": { type: "legs", subtitle: "Hip dominant", exercises: [
+    "RDL", "Hack Squat", "Leg Curl", "Hip Adduction/Abduction", "Standing Calf Raise", "Cable Crunch"
   ]},
   "Legs B": { type: "legs", subtitle: "Quad dominant", exercises: [
     "Hack Squat", "Leg Extension", "Leg Curl", "Seated Calf", "Cable Crunch"
   ]},
 };
 
+const WORKOUT_CONFIG_KEY = "ale-workout-config-v1";
+const REGISTRY_KEY = "ale-exercise-registry-v1";
+
+// activeDays: what's actually shown/loggable today, editable per day.
+// registry: every exercise name ever active for a given type, never shrinks,
+// so swapping an exercise out never hides its history.
+let activeDays = {};
+let registry = { push: [], pull: [], legs: [] };
+
+function loadWorkoutConfig() {
+  activeDays = JSON.parse(JSON.stringify(DEFAULT_DAYS));
+  try {
+    const overrides = JSON.parse(localStorage.getItem(WORKOUT_CONFIG_KEY) || "{}");
+    Object.keys(overrides).forEach(day => {
+      if (activeDays[day] && Array.isArray(overrides[day])) {
+        activeDays[day].exercises = overrides[day];
+      }
+    });
+  } catch (e) {}
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(REGISTRY_KEY) || "null");
+    registry = stored || { push: [], pull: [], legs: [] };
+  } catch (e) {
+    registry = { push: [], pull: [], legs: [] };
+  }
+  ["push", "pull", "legs"].forEach(type => {
+    if (!registry[type]) registry[type] = [];
+    Object.values(DEFAULT_DAYS).filter(d => d.type === type).forEach(d => {
+      d.exercises.forEach(ex => { if (!registry[type].includes(ex)) registry[type].push(ex); });
+    });
+    Object.values(activeDays).filter(d => d.type === type).forEach(d => {
+      d.exercises.forEach(ex => { if (!registry[type].includes(ex)) registry[type].push(ex); });
+    });
+  });
+  saveRegistry();
+}
+
+function saveWorkoutConfig() {
+  const overrides = {};
+  Object.keys(activeDays).forEach(day => { overrides[day] = activeDays[day].exercises; });
+  localStorage.setItem(WORKOUT_CONFIG_KEY, JSON.stringify(overrides));
+}
+
+function saveRegistry() {
+  localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+}
+
 let logs = [];
-let currentDay = "Pull A";
+let currentDay = "Push A";
+let editMode = false;
 let sessionDate = todayStr();
 let storageReady = false;
 const STORAGE_KEY = "ale-training-logs-v1";
-let sessionNotes = {};
-const NOTES_KEY = "ale-session-notes-v1";
-let pendingEdit = null;
+const FIX_FLAG_KEY = "ale-date-fix-2026-07-09-v1";
+
+// Corrected data embedded directly so nothing needs to be imported by hand.
+// Used to seed a fresh install AND to patch the specific entries that got
+// mis-dated by the old UTC bug (see fixIds below).
+const DEFAULT_LOGS = [
+  {"id":1783466106780.4983,"date":"2026-07-07","day":"Pull A","exercise":"Pull Ups","weight":1,"reps":8},
+  {"id":1783466635957.4917,"date":"2026-07-07","day":"Pull A","exercise":"Pull Ups","weight":1,"reps":8},
+  {"id":1783466641404.92,"date":"2026-07-07","day":"Pull A","exercise":"Pull Ups","weight":1,"reps":7},
+  {"id":1783466657928.0708,"date":"2026-07-07","day":"Pull A","exercise":"Chest Supported Row","weight":330,"reps":10},
+  {"id":1783466944376.2136,"date":"2026-07-07","day":"Pull A","exercise":"Chest Supported Row","weight":330,"reps":8},
+  {"id":1783467295857.343,"date":"2026-07-07","day":"Pull A","exercise":"Chest Supported Row","weight":280,"reps":10},
+  {"id":1783467302686.912,"date":"2026-07-07","day":"Pull A","exercise":"Kelso Shrug","weight":280,"reps":8},
+  {"id":1783467484038.2134,"date":"2026-07-07","day":"Pull A","exercise":"Kelso Shrug","weight":240,"reps":10},
+  {"id":1783467942792.2048,"date":"2026-07-07","day":"Pull A","exercise":"Shrugs","weight":185,"reps":15},
+  {"id":1783469043310.9915,"date":"2026-07-07","day":"Pull A","exercise":"Preacher Curl","weight":80,"reps":9},
+  {"id":1783469452941.3972,"date":"2026-07-07","day":"Pull A","exercise":"Preacher Curl","weight":70,"reps":10},
+  {"id":1783469462720.3025,"date":"2026-07-07","day":"Pull A","exercise":"Preacher Curl","weight":70,"reps":10},
+  {"id":1783469471007.5464,"date":"2026-07-07","day":"Pull A","exercise":"Rear Delt Fly","weight":110,"reps":10},
+  {"id":1783469890393.2158,"date":"2026-07-07","day":"Pull A","exercise":"Rear Delt Fly","weight":120,"reps":10},
+  {"id":1783469894747.4841,"date":"2026-07-07","day":"Pull A","exercise":"Rear Delt Fly","weight":120,"reps":8},
+  {"id":1783469905989.8408,"date":"2026-07-07","day":"Pull A","exercise":"Shrugs","weight":225,"reps":10},
+  {"id":1783469909941.6238,"date":"2026-07-07","day":"Pull A","exercise":"Shrugs","weight":225,"reps":10},
+  {"id":1783471387998.2166,"date":"2026-07-07","day":"Pull A","exercise":"Incline Dumbbell Curl","weight":30,"reps":10},
+  {"id":1783471398762.8489,"date":"2026-07-07","day":"Pull A","exercise":"Incline Dumbbell Curl","weight":30,"reps":8},
+  {"id":1783471407191.6333,"date":"2026-07-07","day":"Pull A","exercise":"Incline Dumbbell Curl","weight":30,"reps":7},
+  {"id":1783539268664.3264,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":60,"reps":8},
+  {"id":1783540123215.36,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":70,"reps":8},
+  {"id":1783540160571.0742,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":60,"reps":8},
+  {"id":1783540184635.5515,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":60,"reps":6},
+  {"id":1783540188635.041,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":60,"reps":6},
+  {"id":1783540621306.535,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":50,"reps":12},
+  {"id":1783541079355.257,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":100,"reps":7},
+  {"id":1783541096428.4885,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":90,"reps":10},
+  {"id":1783541327656.0706,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":90,"reps":8},
+  {"id":1783542391563.449,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":66,"reps":7},
+  {"id":1783542398454.6992,"date":"2026-07-08","day":"Push A","exercise":"OHE","weight":66,"reps":12},
+  {"id":1783542401866.7864,"date":"2026-07-08","day":"Push A","exercise":"OHE","weight":66,"reps":10},
+  {"id":1783542405208.6418,"date":"2026-07-08","day":"Push A","exercise":"OHE","weight":66,"reps":10},
+  {"id":1783542490167.4539,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":60.5,"reps":10},
+  {"id":1783542695278.2146,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":60.5,"reps":10}
+];
+const DEFAULT_PEPTIDE_TAKEN = {
+  "ghk": ["2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08"],
+  "reta": ["2026-07-01","2026-07-08"],
+  "tesa": ["2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07"],
+  "ipam": ["2026-07-03_PM","2026-07-04_AM","2026-07-04_PM","2026-07-05_AM","2026-07-05_PM","2026-07-06_AM","2026-07-06_PM","2026-07-07_AM","2026-07-07_PM","2026-07-08_AM","2026-07-08_PM"]
+};
+const FIX_IDS = new Set([1783469043310.9915,1783469452941.3972,1783469462720.3025,1783469471007.5464,1783469890393.2158,1783469894747.4841,1783469905989.8408,1783469909941.6238,1783471387998.2166,1783471398762.8489,1783471407191.6333]);
+
+function showConfirmModal(message, confirmLabel, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:24px;";
+  overlay.innerHTML = `
+    <div style="background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:340px; width:100%;">
+      <div style="font-size:14px; line-height:1.5; margin-bottom:18px; color:var(--text);">${message}</div>
+      <div style="display:flex; gap:8px;">
+        <button id="confirmCancelBtn" style="flex:1; background:var(--card-hi); color:var(--sub); border:1px solid var(--line); border-radius:8px; padding:12px; font-weight:800; font-size:13.5px;">Cancel</button>
+        <button id="confirmOkBtn" style="flex:1; background:var(--legs); color:white; border:none; border-radius:8px; padding:12px; font-weight:800; font-size:13.5px;">${confirmLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector("#confirmCancelBtn").onclick = () => overlay.remove();
+  overlay.querySelector("#confirmOkBtn").onclick = () => {
+    overlay.remove();
+    onConfirm();
+  };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+}
 
 function todayStr() {
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return y + "-" + m + "-" + day;
 }
 
-async function loadNotes() {
-  try {
-    const value = localStorage.getItem(NOTES_KEY);
-    sessionNotes = value ? JSON.parse(value) : {};
-  } catch (e) {
-    sessionNotes = {};
-  }
+function nowTimeStr() {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return h + ":" + min;
 }
-async function saveNotes() {
-  try {
-    localStorage.setItem(NOTES_KEY, JSON.stringify(sessionNotes));
-  } catch (e) {
-    showToast("Save failed, try again");
-  }
+
+function updateClock() {
+  const el = document.getElementById("clocklabel");
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 }
 
 async function loadLogs() {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    logs = value ? JSON.parse(value) : [];
+    if (value) {
+      logs = JSON.parse(value);
+    } else {
+      // Fresh install: seed with the corrected training history.
+      logs = JSON.parse(JSON.stringify(DEFAULT_LOGS));
+      await saveLogs();
+    }
   } catch (e) {
     logs = [];
   }
+
+  // One-time patch: fix the entries that were mis-dated by the old UTC bug,
+  // wherever this data actually lives (won't touch anything logged since).
+  if (!localStorage.getItem(FIX_FLAG_KEY)) {
+    let changed = false;
+    logs.forEach(l => {
+      if (FIX_IDS.has(l.id) && l.date === "2026-07-08") {
+        l.date = "2026-07-07";
+        changed = true;
+      }
+    });
+    if (changed) await saveLogs();
+    localStorage.setItem(FIX_FLAG_KEY, "1");
+  }
+
   storageReady = true;
   render();
 }
@@ -491,11 +571,13 @@ function getPR(name) {
   return entries.reduce((max, e) => e.weight > max.weight ? e : max, entries[0]);
 }
 
+const TAB_ORDER = ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"];
+
 function renderTabs() {
   const tabsEl = document.getElementById("tabs");
   tabsEl.innerHTML = "";
-  Object.keys(DAYS).forEach(day => {
-    const info = DAYS[day];
+  TAB_ORDER.filter(day => activeDays[day]).forEach(day => {
+    const info = activeDays[day];
     const div = document.createElement("div");
     div.className = "tab" + (day === currentDay ? " active" : "");
     div.dataset.type = info.type;
@@ -509,17 +591,9 @@ function render() {
   renderTabs();
   const dateInput = document.getElementById("sessionDate");
   if (!dateInput.value) dateInput.value = sessionDate;
-  dateInput.onchange = () => { sessionDate = dateInput.value; render(); };
+  dateInput.onchange = () => { sessionDate = dateInput.value; };
 
-  const notesInput = document.getElementById("sessionNotes");
-  const noteKey = sessionDate + "_" + currentDay;
-  notesInput.value = sessionNotes[noteKey] || "";
-  notesInput.oninput = () => {
-    sessionNotes[noteKey] = notesInput.value;
-    saveNotes();
-  };
-
-  const info = DAYS[currentDay];
+  const info = activeDays[currentDay];
   document.getElementById("daylabel").textContent = info.subtitle;
   const main = document.getElementById("main");
 
@@ -528,10 +602,19 @@ function render() {
     return;
   }
 
+  const editBtn = document.getElementById("editExercisesBtn");
+  editBtn.textContent = editMode ? "Done" : "Edit";
+  editBtn.onclick = () => { editMode = !editMode; render(); };
+
+  if (editMode) {
+    renderExerciseEditor(main, info);
+    return;
+  }
+
   main.innerHTML = "";
   info.exercises.forEach(name => {
     const pr = getPR(name);
-    const history = getExerciseLogs(name).slice(0, 3);
+    const todaysSets = logs.filter(l => l.exercise === name && l.date === sessionDate && l.day === currentDay);
 
     const card = document.createElement("div");
     card.className = "exercise";
@@ -541,7 +624,7 @@ function render() {
     head.innerHTML = `
       <div>
         <div class="ex-name">${name}</div>
-        <div class="ex-hint">${history.length ? history.map(h => `${h.date.slice(5)}: ${h.weight}${h.reps ? ' x' + h.reps : ''}`).join(' &middot; ') : 'No entries yet'}</div>
+        <div class="ex-hint">${todaysSets.length ? todaysSets.length + ' set' + (todaysSets.length === 1 ? '' : 's') + ' logged today' : 'No sets logged today'}</div>
       </div>
       <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
     `;
@@ -557,11 +640,6 @@ function render() {
     const wInput = logrow.querySelector(".w-input");
     const rInput = logrow.querySelector(".r-input");
     const btn = logrow.querySelector(".log-btn");
-    if (pendingEdit && pendingEdit.exercise === name) {
-      wInput.value = pendingEdit.weight;
-      rInput.value = pendingEdit.reps || "";
-      pendingEdit = null;
-    }
     btn.onclick = async () => {
       const weight = parseFloat(wInput.value);
       const reps = rInput.value ? parseInt(rInput.value) : null;
@@ -574,38 +652,135 @@ function render() {
     };
     card.appendChild(logrow);
 
-    const allHistory = getExerciseLogs(name);
-    if (allHistory.length) {
+    if (todaysSets.length) {
       const expand = document.createElement("div");
-      expand.className = "expand";
-      allHistory.forEach(e => {
+      expand.className = "expand open";
+      todaysSets.forEach((s, i) => {
         const row = document.createElement("div");
         row.className = "entry-row";
-        row.innerHTML = `<span>${e.date} &middot; ${e.weight}${e.reps ? ' x ' + e.reps : ''}</span><span><span class="edit">Edit</span><span class="del">Delete</span></span>`;
-        row.querySelector(".edit").onclick = async (ev) => {
+        row.innerHTML = `<span>Set ${i + 1}: ${s.weight}${s.reps ? ' x ' + s.reps : ''}</span><span class="del">Delete</span>`;
+        row.querySelector(".del").onclick = (ev) => {
           ev.stopPropagation();
-          pendingEdit = { exercise: name, weight: e.weight, reps: e.reps };
-          logs = logs.filter(l => l.id !== e.id);
-          await saveLogs();
-          render();
-          showToast("Edit the values, then hit Log");
-        };
-        row.querySelector(".del").onclick = async (ev) => {
-          ev.stopPropagation();
-          logs = logs.filter(l => l.id !== e.id);
-          await saveLogs();
-          render();
+          showConfirmModal(`Delete Set ${i + 1} (${s.weight}${s.reps ? ' x ' + s.reps : ''})? This can't be undone.`, "Delete", async () => {
+            logs = logs.filter(l => l.id !== s.id);
+            await saveLogs();
+            render();
+          });
         };
         expand.appendChild(row);
       });
       card.appendChild(expand);
-      head.style.cursor = "pointer";
-      head.onclick = () => { expand.classList.toggle("open"); };
     }
 
     main.appendChild(card);
   });
+
+  const finishWrap = document.createElement("div");
+  finishWrap.style.padding = "4px 0 20px";
+  const doneKey = sessionDate + "_" + currentDay;
+  const finished = getFinishedSessions().includes(doneKey);
+  const finishBtn = document.createElement("button");
+  finishBtn.textContent = finished ? "Session complete" : "Finish workout";
+  finishBtn.style.cssText = `width:100%; padding:14px; border-radius:12px; border:none; font-weight:800; font-size:14px; ${finished ? "background: var(--card-hi); color: var(--sub); border:1px solid var(--line);" : "background: var(--gold); color: #14171f;"}`;
+  finishBtn.onclick = () => {
+    const list = getFinishedSessions();
+    if (!list.includes(doneKey)) {
+      list.push(doneKey);
+      localStorage.setItem(FINISHED_KEY, JSON.stringify(list));
+    }
+    showToast("Workout saved. Nice work.");
+    render();
+  };
+  finishWrap.appendChild(finishBtn);
+  main.appendChild(finishWrap);
 }
+
+const FINISHED_KEY = "ale-finished-sessions-v1";
+function getFinishedSessions() {
+  try {
+    return JSON.parse(localStorage.getItem(FINISHED_KEY) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function renderExerciseEditor(main, info) {
+  main.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "exercise";
+  card.style.padding = "14px";
+
+  const title = document.createElement("div");
+  title.style.cssText = "font-weight:800; font-size:14.5px; margin-bottom:4px;";
+  title.textContent = "Editing " + currentDay;
+  card.appendChild(title);
+
+  const note = document.createElement("div");
+  note.style.cssText = "color:var(--sub); font-size:11px; margin-bottom:12px; line-height:1.5;";
+  note.textContent = "Retype a name to swap an exercise, or remove it. Its old data stays saved under its own name and shows back up under Data if you ever re-add it exactly.";
+  card.appendChild(note);
+
+  const rows = document.createElement("div");
+  info.exercises.forEach((name, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; gap:8px; margin-bottom:8px;";
+    row.innerHTML = `
+      <input type="text" value="${name.replace(/"/g, '&quot;')}" data-idx="${i}" style="flex:1; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 10px; font-size: 13.5px;">
+      <button data-idx="${i}" class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border:1px solid var(--line); border-radius:8px; font-weight:800; padding:0 14px;">×</button>
+    `;
+    rows.appendChild(row);
+  });
+  card.appendChild(rows);
+
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "+ Add exercise";
+  addBtn.style.cssText = "width:100%; margin-top:4px; background:var(--card-hi); border:1px dashed var(--line); color:var(--sub); border-radius:8px; padding:10px; font-weight:700; font-size:13px;";
+  addBtn.onclick = () => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; gap:8px; margin-bottom:8px;";
+    row.innerHTML = `
+      <input type="text" value="" placeholder="New exercise name" style="flex:1; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 10px; font-size: 13.5px;">
+      <button class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border:1px solid var(--line); border-radius:8px; font-weight:800; padding:0 14px;">×</button>
+    `;
+    row.querySelector(".removeRowBtn").onclick = () => row.remove();
+    rows.appendChild(row);
+    row.querySelector("input").focus();
+  };
+  card.appendChild(addBtn);
+
+  rows.querySelectorAll(".removeRowBtn").forEach(btn => {
+    btn.onclick = () => btn.parentElement.remove();
+  });
+
+  const actions = document.createElement("div");
+  actions.style.cssText = "display:flex; gap:8px; margin-top:16px;";
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save";
+  saveBtn.style.cssText = "flex:1; background:var(--gold); color:#14171f; border:none; border-radius:8px; padding:12px; font-weight:800; font-size:13.5px;";
+  saveBtn.onclick = () => {
+    const names = [...rows.querySelectorAll("input")].map(i => i.value.trim()).filter(Boolean);
+    if (!names.length) { showToast("Add at least one exercise"); return; }
+    activeDays[currentDay].exercises = names;
+    saveWorkoutConfig();
+    const type = activeDays[currentDay].type;
+    names.forEach(n => { if (!registry[type].includes(n)) registry[type].push(n); });
+    saveRegistry();
+    editMode = false;
+    showToast("Saved");
+    render();
+  };
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.style.cssText = "flex:1; background:var(--card-hi); color:var(--sub); border:1px solid var(--line); border-radius:8px; padding:12px; font-weight:800; font-size:13.5px;";
+  cancelBtn.onclick = () => { editMode = false; render(); };
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  card.appendChild(actions);
+
+  main.appendChild(card);
+}
+
 
 // ---------- VIEW SWITCHING ----------
 let currentView = "log";
@@ -618,7 +793,7 @@ document.getElementById("navbar").querySelectorAll(".navtab").forEach(tab => {
     document.getElementById("dataView").style.display = currentView === "data" ? "" : "none";
     document.getElementById("peptideView").style.display = currentView === "peptides" ? "" : "none";
     document.getElementById("daylabel").textContent =
-      currentView === "log" ? DAYS[currentDay].subtitle :
+      currentView === "log" ? activeDays[currentDay].subtitle :
       currentView === "data" ? "Weight progress by exercise" :
       "Schedule and adherence";
     if (currentView === "data") renderDataView();
@@ -634,7 +809,7 @@ const PEPTIDES = [
   { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#e8b84b" },
 ];
 const PEPTIDE_KEY = "ale-peptide-log-v1";
-let peptideLog = { taken: {} }; // { [id]: [dateStr, ...] }
+let peptideLog = { taken: {}, times: {} }; // taken: { [id]: [dateStr, ...] }, times: { [id]: { [key]: "HH:MM" } }
 
 function parseUTC(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -689,28 +864,20 @@ function getPeptideStatus(p, dateStr) {
   return { state: "due" };
 }
 
-const DEFAULT_PEPTIDE_LOG = {
-  taken: {
-    ghk: ["2026-07-02", "2026-07-03", "2026-07-04", "2026-07-05", "2026-07-06"],
-    reta: ["2026-07-01"],
-    tesa: ["2026-07-03", "2026-07-04", "2026-07-05", "2026-07-06"],
-    ipam: [
-      "2026-07-03_PM",
-      "2026-07-04_AM", "2026-07-04_PM",
-      "2026-07-05_AM", "2026-07-05_PM",
-      "2026-07-06_AM", "2026-07-06_PM"
-    ]
-  }
-};
-
 async function loadPeptideLog() {
   try {
     const value = localStorage.getItem(PEPTIDE_KEY);
-    peptideLog = value ? JSON.parse(value) : JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_LOG));
+    if (value) {
+      peptideLog = JSON.parse(value);
+    } else {
+      peptideLog = { taken: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TAKEN)), times: {} };
+      await savePeptideLog();
+    }
   } catch (e) {
-    peptideLog = JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_LOG));
+    peptideLog = { taken: {}, times: {} };
   }
   if (!peptideLog.taken) peptideLog.taken = {};
+  if (!peptideLog.times) peptideLog.times = {};
 }
 async function savePeptideLog() {
   try {
@@ -752,14 +919,20 @@ function renderPeptideView() {
         ? `Off day ${status.dayNum} of 2 &middot; cycle ${status.cycleNum}`
         : `Next dose in ${status.daysUntil} day${status.daysUntil === 1 ? "" : "s"}`;
     } else if (p.twiceDaily) {
+      const amTime = (peptideLog.times[p.id] || {})[today + "_AM"];
+      const pmTime = (peptideLog.times[p.id] || {})[today + "_PM"];
       pillHtml = takenToday
         ? `<span class="pill taken">Both doses taken</span>`
         : (takenAM || takenPM)
           ? `<span class="pill taken">1 of 2 taken</span>`
           : `<span class="pill due">Due today</span>`;
-      subText = `Day ${status.dayNum}`;
+      const timeBits = [];
+      if (takenAM) timeBits.push("AM" + (amTime ? " " + amTime : ""));
+      if (takenPM) timeBits.push("PM" + (pmTime ? " " + pmTime : ""));
+      subText = `Day ${status.dayNum}` + (timeBits.length ? ` &middot; ${timeBits.join(", ")}` : "");
     } else if (takenToday) {
-      pillHtml = `<span class="pill taken">Taken today</span>`;
+      const takenTime = (peptideLog.times[p.id] || {})[today];
+      pillHtml = `<span class="pill taken">Taken today${takenTime ? " &middot; " + takenTime : ""}</span>`;
       subText = p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}`
         : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}`
         : p.pattern === "weekly" ? `Week ${status.dayNum}`
@@ -785,17 +958,26 @@ function renderPeptideView() {
     if (status.state === "due" && p.twiceDaily) {
       const actions = document.createElement("div");
       actions.className = "pep-actions";
+      actions.style.flexWrap = "wrap";
       actions.innerHTML = `
+        <input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:110px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">
         <button class="pep-btn ${takenAM ? 'done-btn' : ''}" data-slot="AM">${takenAM ? 'AM done' : 'Mark AM'}</button>
         <button class="pep-btn ${takenPM ? 'done-btn' : ''}" data-slot="PM">${takenPM ? 'PM done' : 'Mark PM'}</button>
       `;
+      const timeInput = actions.querySelector(".pep-time-input");
       actions.querySelectorAll("button").forEach(btn => {
         btn.onclick = async () => {
           const key = today + "_" + btn.dataset.slot;
           if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
+          if (!peptideLog.times[p.id]) peptideLog.times[p.id] = {};
           const idx = peptideLog.taken[p.id].indexOf(key);
-          if (idx >= 0) peptideLog.taken[p.id].splice(idx, 1);
-          else peptideLog.taken[p.id].push(key);
+          if (idx >= 0) {
+            peptideLog.taken[p.id].splice(idx, 1);
+            delete peptideLog.times[p.id][key];
+          } else {
+            peptideLog.taken[p.id].push(key);
+            peptideLog.times[p.id][key] = timeInput.value || nowTimeStr();
+          }
           await savePeptideLog();
           renderPeptideView();
         };
@@ -804,14 +986,25 @@ function renderPeptideView() {
     } else if (status.state === "due" || status.state === "off") {
       const actions = document.createElement("div");
       actions.className = "pep-actions";
+      actions.style.flexWrap = "wrap";
       const canToggle = status.state === "due";
-      actions.innerHTML = `<button class="pep-btn ${takenToday ? 'done-btn' : ''}" ${canToggle ? '' : 'disabled style="opacity:0.4"'}>${takenToday ? 'Mark not taken' : 'Mark taken'}</button>`;
+      actions.innerHTML = `
+        ${canToggle ? `<input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:110px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">` : ''}
+        <button class="pep-btn ${takenToday ? 'done-btn' : ''}" ${canToggle ? '' : 'disabled style="opacity:0.4"'}>${takenToday ? 'Mark not taken' : 'Mark taken'}</button>
+      `;
       if (canToggle) {
+        const timeInput = actions.querySelector(".pep-time-input");
         actions.querySelector("button").onclick = async () => {
           if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
+          if (!peptideLog.times[p.id]) peptideLog.times[p.id] = {};
           const idx = peptideLog.taken[p.id].indexOf(today);
-          if (idx >= 0) peptideLog.taken[p.id].splice(idx, 1);
-          else peptideLog.taken[p.id].push(today);
+          if (idx >= 0) {
+            peptideLog.taken[p.id].splice(idx, 1);
+            delete peptideLog.times[p.id][today];
+          } else {
+            peptideLog.taken[p.id].push(today);
+            peptideLog.times[p.id][today] = timeInput.value || nowTimeStr();
+          }
           await savePeptideLog();
           renderPeptideView();
         };
@@ -839,7 +1032,6 @@ function renderPeptideView() {
       }
       dot.className = cls;
       dot.title = d;
-      dot.textContent = String(parseInt(d.slice(8, 10), 10));
       dotsWrap.appendChild(dot);
     });
     card.appendChild(dotsWrap);
@@ -851,14 +1043,18 @@ function renderPeptideView() {
       expand.style.marginTop = "10px";
       allTaken.forEach(key => {
         const [dateStr, slot] = key.split("_");
+        const time = (peptideLog.times[p.id] || {})[key];
         const row = document.createElement("div");
         row.className = "entry-row";
-        row.innerHTML = `<span>${dateStr}${slot ? ' &middot; ' + slot : ''}</span><span class="del">Delete</span>`;
-        row.querySelector(".del").onclick = async (ev) => {
+        row.innerHTML = `<span>${dateStr}${slot ? ' &middot; ' + slot : ''}${time ? ' &middot; ' + time : ''}</span><span class="del">Delete</span>`;
+        row.querySelector(".del").onclick = (ev) => {
           ev.stopPropagation();
-          peptideLog.taken[p.id] = peptideLog.taken[p.id].filter(k => k !== key);
-          await savePeptideLog();
-          renderPeptideView();
+          showConfirmModal(`Delete this ${p.name} dose log (${dateStr}${slot ? ' ' + slot : ''})? This can't be undone.`, "Delete", async () => {
+            peptideLog.taken[p.id] = peptideLog.taken[p.id].filter(k => k !== key);
+            if (peptideLog.times[p.id]) delete peptideLog.times[p.id][key];
+            await savePeptideLog();
+            renderPeptideView();
+          });
         };
         expand.appendChild(row);
       });
@@ -871,33 +1067,19 @@ function renderPeptideView() {
   });
 }
 
-// ---------- DATA VIEW (progress chart) ----------
-function populateExerciseSelect() {
-  const select = document.getElementById("exerciseSelect");
-  const allExercises = [...new Set(Object.values(DAYS).flatMap(d => d.exercises))];
-  select.innerHTML = allExercises.map(e => `<option value="${e}">${e}</option>`).join("");
-  select.onchange = renderChart;
-}
+// ---------- DATA VIEW (grouped, tap-to-expand history + chart) ----------
+let currentDataType = "push";
+let expandedExercise = null;
 
-function renderChart() {
-  const name = document.getElementById("exerciseSelect").value;
-  const entries = getExerciseLogs(name).slice().sort((a, b) => a.date.localeCompare(b.date));
-  const wrap = document.getElementById("chartWrap");
-
-  if (!entries.length) {
-    wrap.innerHTML = `<div class="chart-card"><div class="empty">No entries yet for ${name}</div></div>`;
-    return;
-  }
-
+function buildChartHtml(entriesDesc) {
+  const entries = entriesDesc.slice().sort((a, b) => a.date.localeCompare(b.date));
   const pr = entries.reduce((max, e) => e.weight > max.weight ? e : max, entries[0]);
   const latest = entries[entries.length - 1];
-
-  const w = 300, h = 140, pad = 10;
+  const w = 300, h = 120, pad = 10;
   const weights = entries.map(e => e.weight);
   const minW = Math.min(...weights) * 0.95;
   const maxW = Math.max(...weights) * 1.05;
   const range = maxW - minW || 1;
-
   const points = entries.map((e, i) => {
     const x = pad + (i / Math.max(entries.length - 1, 1)) * (w - pad * 2);
     const y = h - pad - ((e.weight - minW) / range) * (h - pad * 2);
@@ -905,15 +1087,14 @@ function renderChart() {
   });
   const pathD = points.map((pt, i) => (i === 0 ? "M" : "L") + pt[0].toFixed(1) + "," + pt[1].toFixed(1)).join(" ");
   const dotsSvg = points.map(pt => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="3" fill="#e8b84b"/>`).join("");
-
-  wrap.innerHTML = `
+  return `
     <div class="chart-card">
       <div class="chart-stats">
         <div><div class="chart-stat-label">PR</div><div class="chart-stat-val" style="color:var(--gold)">${pr.weight}</div></div>
         <div><div class="chart-stat-label">Latest</div><div class="chart-stat-val">${latest.weight}</div></div>
         <div><div class="chart-stat-label">Sessions</div><div class="chart-stat-val">${entries.length}</div></div>
       </div>
-      <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:140px; overflow:visible;">
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:120px; overflow:visible;">
         <path d="${pathD}" fill="none" stroke="#e8b84b" stroke-width="2"/>
         ${dotsSvg}
       </svg>
@@ -922,178 +1103,123 @@ function renderChart() {
 }
 
 function renderDataView() {
-  populateExerciseSelect();
-  renderChart();
-}
+  const tabsEl = document.getElementById("dataTabs");
+  tabsEl.innerHTML = "";
+  ["push", "pull", "legs"].forEach(type => {
+    const div = document.createElement("div");
+    div.className = "tab" + (type === currentDataType ? " active" : "");
+    div.dataset.type = type;
+    div.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    div.onclick = () => { currentDataType = type; expandedExercise = null; renderDataView(); };
+    tabsEl.appendChild(div);
+  });
 
-// ---------- DATA SUB-TABS ----------
-let dataSubview = "exercises";
-document.getElementById("dataSubtabs").querySelectorAll(".subtab").forEach(tab => {
-  tab.onclick = () => {
-    dataSubview = tab.dataset.sub;
-    document.querySelectorAll("#dataSubtabs .subtab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById("exercisesSub").style.display = dataSubview === "exercises" ? "" : "none";
-    document.getElementById("weightSub").style.display = dataSubview === "weight" ? "" : "none";
-    document.getElementById("summarySub").style.display = dataSubview === "summary" ? "" : "none";
-    if (dataSubview === "exercises") renderDataView();
-    if (dataSubview === "weight") renderWeightView();
-    if (dataSubview === "summary") renderSummaryView();
-  };
-});
+  const list = document.getElementById("dataList");
+  list.innerHTML = "";
+  const exercisesForType = registry[currentDataType] || [];
+  const activeNames = new Set(Object.values(activeDays).filter(d => d.type === currentDataType).flatMap(d => d.exercises));
 
-// ---------- BODY WEIGHT TRACKER ----------
-let bodyweightLog = [];
-const WEIGHT_KEY = "ale-bodyweight-log-v1";
+  exercisesForType.forEach(name => {
+    const entries = getExerciseLogs(name);
+    const pr = getPR(name);
+    const isRetired = !activeNames.has(name);
 
-async function loadWeightLog() {
-  try {
-    const value = localStorage.getItem(WEIGHT_KEY);
-    bodyweightLog = value ? JSON.parse(value) : [];
-  } catch (e) {
-    bodyweightLog = [];
-  }
-}
-async function saveWeightLog() {
-  try {
-    localStorage.setItem(WEIGHT_KEY, JSON.stringify(bodyweightLog));
-  } catch (e) {
-    showToast("Save failed, try again");
-  }
-}
+    const card = document.createElement("div");
+    card.className = "exercise";
 
-function renderWeightView() {
-  const dateInput = document.getElementById("weightDate");
-  if (!dateInput.value) dateInput.value = todayStr();
-  const input = document.getElementById("weightInput");
-  const btn = document.getElementById("weightLogBtn");
-  btn.onclick = async () => {
-    const weight = parseFloat(input.value);
-    if (!weight) { showToast("Enter a weight"); return; }
-    const date = dateInput.value;
-    bodyweightLog = bodyweightLog.filter(w => w.date !== date);
-    bodyweightLog.push({ date, weight });
-    input.value = "";
-    await saveWeightLog();
-    showToast("Weight logged");
-    renderWeightView();
-  };
-
-  const entries = bodyweightLog.slice().sort((a, b) => a.date.localeCompare(b.date));
-  const chartWrap = document.getElementById("weightChartWrap");
-  if (!entries.length) {
-    chartWrap.innerHTML = `<div class="chart-card"><div class="empty">No weight logged yet</div></div>`;
-  } else {
-    const latest = entries[entries.length - 1];
-    const first = entries[0];
-    const change = (latest.weight - first.weight).toFixed(1);
-    const changeColor = change < 0 ? "#22945a" : change > 0 ? "#c1531f" : "var(--text)";
-    const w = 300, h = 140, pad = 10;
-    const weights = entries.map(e => e.weight);
-    const minW = Math.min(...weights) - 1;
-    const maxW = Math.max(...weights) + 1;
-    const range = maxW - minW || 1;
-    const points = entries.map((e, i) => {
-      const x = pad + (i / Math.max(entries.length - 1, 1)) * (w - pad * 2);
-      const y = h - pad - ((e.weight - minW) / range) * (h - pad * 2);
-      return [x, y];
-    });
-    const pathD = points.map((pt, i) => (i === 0 ? "M" : "L") + pt[0].toFixed(1) + "," + pt[1].toFixed(1)).join(" ");
-    const dotsSvg = points.map(pt => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="3" fill="#e8b84b"/>`).join("");
-    chartWrap.innerHTML = `
-      <div class="chart-card">
-        <div class="chart-stats">
-          <div><div class="chart-stat-label">Latest</div><div class="chart-stat-val">${latest.weight}</div></div>
-          <div><div class="chart-stat-label">Change</div><div class="chart-stat-val" style="color:${changeColor}">${change > 0 ? '+' : ''}${change}</div></div>
-          <div><div class="chart-stat-label">Entries</div><div class="chart-stat-val">${entries.length}</div></div>
-        </div>
-        <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:140px; overflow:visible;">
-          <path d="${pathD}" fill="none" stroke="#e8b84b" stroke-width="2"/>
-          ${dotsSvg}
-        </svg>
+    const head = document.createElement("div");
+    head.className = "ex-head";
+    head.style.cursor = "pointer";
+    head.innerHTML = `
+      <div>
+        <div class="ex-name">${name}${isRetired ? ' <span style="color:var(--sub); font-weight:600; font-size:10.5px;">(not in current routine)</span>' : ''}</div>
+        <div class="ex-hint">${entries.length ? entries.length + ' session' + (entries.length === 1 ? '' : 's') + ' &middot; last ' + entries[0].date : 'No entries yet'}</div>
       </div>
+      <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
     `;
-  }
+    head.onclick = () => { expandedExercise = expandedExercise === name ? null : name; renderDataView(); };
+    card.appendChild(head);
 
-  const histWrap = document.getElementById("weightHistoryWrap");
-  histWrap.innerHTML = "";
-  entries.slice().reverse().forEach(e => {
-    const row = document.createElement("div");
-    row.className = "entry-row";
-    row.innerHTML = `<span>${e.date} &middot; ${e.weight} lbs</span><span class="del">Delete</span>`;
-    row.querySelector(".del").onclick = async () => {
-      bodyweightLog = bodyweightLog.filter(w => w.date !== e.date);
-      await saveWeightLog();
-      renderWeightView();
-    };
-    histWrap.appendChild(row);
+    if (expandedExercise === name) {
+      if (entries.length) {
+        const chartDiv = document.createElement("div");
+        chartDiv.style.padding = "0 14px 14px";
+        chartDiv.innerHTML = buildChartHtml(entries);
+        card.appendChild(chartDiv);
+
+        const expand = document.createElement("div");
+        expand.className = "expand open";
+        entries.forEach(e => {
+          const row = document.createElement("div");
+          row.className = "entry-row";
+          row.innerHTML = `<span>${e.date} &middot; ${e.weight}${e.reps ? ' x ' + e.reps : ''}</span><span class="del">Delete</span>`;
+          row.querySelector(".del").onclick = (ev) => {
+            ev.stopPropagation();
+            showConfirmModal(`Delete this entry (${e.date}, ${e.weight}${e.reps ? ' x ' + e.reps : ''})? This can't be undone.`, "Delete", async () => {
+              logs = logs.filter(l => l.id !== e.id);
+              await saveLogs();
+              renderDataView();
+            });
+          };
+          expand.appendChild(row);
+        });
+        card.appendChild(expand);
+      } else {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.style.padding = "0 14px 14px";
+        emptyDiv.innerHTML = '<div class="empty">No sets logged for this exercise yet</div>';
+        card.appendChild(emptyDiv);
+      }
+
+      const deleteAllWrap = document.createElement("div");
+      deleteAllWrap.style.padding = "0 14px 14px";
+      const deleteAllBtn = document.createElement("button");
+      deleteAllBtn.textContent = entries.length ? "Delete all data for " + name : "Remove " + name;
+      deleteAllBtn.style.cssText = "width:100%; background:var(--card-hi); color:var(--legs); border:1px solid var(--legs); border-radius:8px; padding:10px; font-weight:800; font-size:12.5px;";
+      deleteAllBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        const msg = entries.length
+          ? `Permanently delete all ${entries.length} logged session${entries.length === 1 ? '' : 's'} for "${name}"? This removes its full history and cannot be undone.`
+          : `Remove "${name}"? It has no logged data, this just takes it off your list.`;
+        showConfirmModal(msg, entries.length ? "Delete" : "Remove", async () => {
+          logs = logs.filter(l => l.exercise !== name);
+          await saveLogs();
+          registry[currentDataType] = registry[currentDataType].filter(n => n !== name);
+          saveRegistry();
+          // Also strip it out of any active day it's still assigned to, so it doesn't reappear.
+          let configChanged = false;
+          Object.keys(activeDays).forEach(day => {
+            if (activeDays[day].exercises.includes(name)) {
+              activeDays[day].exercises = activeDays[day].exercises.filter(n => n !== name);
+              configChanged = true;
+            }
+          });
+          if (configChanged) saveWorkoutConfig();
+          expandedExercise = null;
+          showToast(name + (entries.length ? " data deleted" : " removed"));
+          renderDataView();
+        });
+      };
+      deleteAllWrap.appendChild(deleteAllBtn);
+      card.appendChild(deleteAllWrap);
+    }
+
+    list.appendChild(card);
   });
 }
 
-// ---------- WEEKLY SUMMARY ----------
-function renderSummaryView() {
-  const wrap = document.getElementById("summaryWrap");
-  const today = todayStr();
-  const weekAgo = addDays(today, -6);
-
-  const sessionDates = new Set(logs.filter(l => l.date >= weekAgo && l.date <= today).map(l => l.date));
-  const sessionsCount = sessionDates.size;
-
-  let dueCount = 0, takenCount = 0;
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(today, -i);
-    PEPTIDES.forEach(p => {
-      const status = getPeptideStatus(p, d);
-      if (status.state === "due") {
-        if (p.twiceDaily) {
-          dueCount += 2;
-          if ((peptideLog.taken[p.id] || []).includes(d + "_AM")) takenCount++;
-          if ((peptideLog.taken[p.id] || []).includes(d + "_PM")) takenCount++;
-        } else {
-          dueCount += 1;
-          if ((peptideLog.taken[p.id] || []).includes(d)) takenCount++;
-        }
-      }
-    });
-  }
-  const adherence = dueCount ? Math.round((takenCount / dueCount) * 100) : 100;
-
-  const weightEntries = bodyweightLog.filter(w => w.date >= weekAgo && w.date <= today).sort((a, b) => a.date.localeCompare(b.date));
-  let weightTrendHtml = `<span style="color:var(--sub); font-size:13px;">No weight logged this week</span>`;
-  if (weightEntries.length >= 2) {
-    const change = (weightEntries[weightEntries.length - 1].weight - weightEntries[0].weight).toFixed(1);
-    const color = change < 0 ? "#22945a" : change > 0 ? "#c1531f" : "var(--text)";
-    weightTrendHtml = `<span style="color:${color}">${change > 0 ? '+' : ''}${change} lbs</span> this week`;
-  } else if (weightEntries.length === 1) {
-    weightTrendHtml = `${weightEntries[0].weight} lbs logged, need another entry for a trend`;
-  }
-
-  wrap.innerHTML = `
-    <div class="chart-card" style="margin-bottom:12px;">
-      <div class="chart-stat-label">Sessions this week</div>
-      <div class="chart-stat-val" style="font-size:28px;">${sessionsCount}</div>
-    </div>
-    <div class="chart-card" style="margin-bottom:12px;">
-      <div class="chart-stat-label">Peptide adherence</div>
-      <div class="chart-stat-val" style="font-size:28px; color:var(--gold);">${adherence}%</div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-stat-label">Weight trend</div>
-      <div style="font-size:15px; font-weight:700; margin-top:4px;">${weightTrendHtml}</div>
-    </div>
-  `;
-}
-
 async function init() {
+  loadWorkoutConfig();
   await loadLogs();
   await loadPeptideLog();
-  await loadWeightLog();
-  await loadNotes();
+  updateClock();
+  setInterval(updateClock, 1000);
 }
 init();
 
 document.getElementById("exportBtn").onclick = () => {
-  const data = { trainingLogs: logs, peptideLog: peptideLog, bodyweightLog: bodyweightLog, sessionNotes: sessionNotes, exportedAt: new Date().toISOString() };
+  const workoutConfig = JSON.parse(localStorage.getItem(WORKOUT_CONFIG_KEY) || "{}");
+  const data = { trainingLogs: logs, peptideLog: peptideLog, workoutConfig: workoutConfig, exerciseRegistry: registry, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1116,12 +1242,12 @@ document.getElementById("importFile").onchange = async (e) => {
     const data = JSON.parse(text);
     if (data.trainingLogs) logs = data.trainingLogs;
     if (data.peptideLog) peptideLog = data.peptideLog;
-    if (data.bodyweightLog) bodyweightLog = data.bodyweightLog;
-    if (data.sessionNotes) sessionNotes = data.sessionNotes;
+    if (data.workoutConfig) localStorage.setItem(WORKOUT_CONFIG_KEY, JSON.stringify(data.workoutConfig));
+    if (data.exerciseRegistry) registry = data.exerciseRegistry;
     await saveLogs();
     await savePeptideLog();
-    await saveWeightLog();
-    await saveNotes();
+    saveRegistry();
+    loadWorkoutConfig();
     render();
     showToast("Backup restored");
   } catch (err) {
