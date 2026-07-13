@@ -329,6 +329,10 @@
 </div>
 
 <div id="dataView" style="display:none; padding: 16px 18px 0;">
+  <div class="navbar" id="dataSubNav" style="grid-template-columns: repeat(2, 1fr); padding:0 0 14px;">
+    <div class="navtab active" data-subview="exercise">By Exercise</div>
+    <div class="navtab" data-subview="muscle">By Muscle Group</div>
+  </div>
   <div class="tabs" id="dataTabs" style="padding:0 0 12px;"></div>
   <div id="dataList"></div>
 </div>
@@ -339,6 +343,8 @@
     <input type="date" id="peptideDate" style="width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px; font-size: 14px; font-weight: 700;">
     <div style="color: var(--sub); font-size: 10.5px; margin-top: 5px;">Past midnight before bed? Set this back one day before marking taken.</div>
   </div>
+  <button id="calcToggleBtn" style="width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px; font-size:12.5px; font-weight:700; margin-bottom:12px;">Dose Calculator</button>
+  <div id="calcPanel" style="display:none; margin-bottom:14px;"></div>
   <div class="day-header-row" id="dayHeaderRow"></div>
   <div id="peptideCards"></div>
 </div>
@@ -346,6 +352,86 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// Maps every exercise name (current and retired) to its primary muscle group
+// for the weekly volume dashboard. Anything not listed here just gets left
+// out of that view, it doesn't break anything.
+// Prescribed rep range per exercise, from the training protocol. Used to
+// know when a lift has "topped out" its range for coach tips.
+const REP_RANGE_MAP = {
+  "Machine Flat Press": [6, 8],
+  "Dumbbell Incline Press": [8, 10],
+  "Incline Machine Press": [8, 10],
+  "Chest Fly": [10, 15],
+  "Cable Lateral Raise": [12, 15],
+  "Single Arm Machine Lateral Raise": [10, 15],
+  "Single Arm Lat Raise": [10, 12],
+  "OHE": [10, 12],
+  "Tricep Pushdown": [10, 12],
+  "Single Arm Tricep Pushdown": [10, 12],
+  "Pull Ups": [6, 8],
+  "Lat Pulldown": [8, 10],
+  "Chest Supported Row": [6, 10],
+  "Kelso Shrug": [8, 10],
+  "Seated Cable Row": [8, 10],
+  "Shrugs": [10, 12],
+  "Rear Delt Fly": [10, 12],
+  "Preacher Curl": [8, 10],
+  "Behind the Body Cable Curl": [10, 12],
+  "Machine Incline Curl": [10, 12],
+  "Incline Curl": [8, 10],
+  "Incline Dumbbell Curl": [8, 10],
+  "Hammer Curl": [10, 12],
+  "RDL": [6, 8],
+  "Hack Squat": [6, 10],
+  "Leg Extension": [10, 12],
+  "Leg Curl": [10, 12],
+  "Lying Leg Curl": [10, 12],
+  "Seated Leg Curl": [10, 12],
+  "Hip Adduction/Abduction": [12, 15],
+  "Standing Calf Raise": [12, 15],
+  "Seated Calf": [15, 20],
+  "Cable Crunch": [12, 15],
+};
+
+const MUSCLE_MAP = {
+  "Machine Flat Press": "Chest",
+  "Dumbbell Incline Press": "Chest",
+  "Incline Machine Press": "Chest",
+  "Chest Fly": "Chest",
+  "Cable Lateral Raise": "Side Delts",
+  "Single Arm Machine Lateral Raise": "Side Delts",
+  "Single Arm Lat Raise": "Side Delts",
+  "OHE": "Triceps",
+  "Tricep Pushdown": "Triceps",
+  "Single Arm Tricep Pushdown": "Triceps",
+  "Pull Ups": "Lats",
+  "Lat Pulldown": "Lats",
+  "Chest Supported Row": "Back Thickness",
+  "Kelso Shrug": "Back Thickness",
+  "Seated Cable Row": "Back Thickness",
+  "Shrugs": "Traps",
+  "Rear Delt Fly": "Rear Delts",
+  "Preacher Curl": "Biceps",
+  "Behind the Body Cable Curl": "Biceps",
+  "Machine Incline Curl": "Biceps",
+  "Incline Curl": "Biceps",
+  "Incline Dumbbell Curl": "Biceps",
+  "Hammer Curl": "Biceps",
+  "RDL": "Hamstrings",
+  "Hack Squat": "Quads",
+  "Leg Extension": "Quads",
+  "Leg Curl": "Hamstrings",
+  "Lying Leg Curl": "Hamstrings",
+  "Seated Leg Curl": "Hamstrings",
+  "Hip Adduction/Abduction": "Adductors/Abductors",
+  "Standing Calf Raise": "Calves",
+  "Seated Calf": "Calves",
+  "Cable Crunch": "Abs",
+};
+
+// Research-backed weekly set landmarks per muscle group (Schoenfeld 2017/2019, RP Strength).
+const VOLUME_LANDMARKS = { low: 8, high: 20 };
+
 const DEFAULT_DAYS = {
   "Push A": { type: "push", subtitle: "Chest emphasis: flat + stretch", exercises: [
     "Machine Flat Press", "Dumbbell Incline Press", "Chest Fly", "Single Arm Machine Lateral Raise", "OHE", "Single Arm Tricep Pushdown"
@@ -424,8 +510,8 @@ const STORAGE_KEY = "ale-training-logs-v1";
 const FIX_FLAG_KEY = "ale-date-fix-2026-07-09-v1";
 
 // Corrected data embedded directly so nothing needs to be imported by hand.
-// Used to seed a fresh install AND to patch the specific entries that got
-// mis-dated by the old UTC bug (see fixIds below).
+// This mirrors the 7/13 export exactly, real logged sessions and real peptide
+// adherence history, so the app works fully accurately on a fresh install too.
 const DEFAULT_LOGS = [
   {"id":1783466106780.4983,"date":"2026-07-07","day":"Pull A","exercise":"Pull Ups","weight":1,"reps":8},
   {"id":1783466635957.4917,"date":"2026-07-07","day":"Pull A","exercise":"Pull Ups","weight":1,"reps":8},
@@ -450,9 +536,6 @@ const DEFAULT_LOGS = [
   {"id":1783539268664.3264,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":60,"reps":8},
   {"id":1783540123215.36,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":70,"reps":8},
   {"id":1783540160571.0742,"date":"2026-07-08","day":"Push A","exercise":"Machine Flat Press","weight":60,"reps":8},
-  {"id":1783540184635.5515,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":60,"reps":6},
-  {"id":1783540188635.041,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":60,"reps":6},
-  {"id":1783540621306.535,"date":"2026-07-08","day":"Push A","exercise":"Incline Machine Press","weight":50,"reps":12},
   {"id":1783541079355.257,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":100,"reps":7},
   {"id":1783541096428.4885,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":90,"reps":10},
   {"id":1783541327656.0706,"date":"2026-07-08","day":"Push A","exercise":"Single Arm Machine Lateral Raise","weight":90,"reps":8},
@@ -461,13 +544,139 @@ const DEFAULT_LOGS = [
   {"id":1783542401866.7864,"date":"2026-07-08","day":"Push A","exercise":"OHE","weight":66,"reps":10},
   {"id":1783542405208.6418,"date":"2026-07-08","day":"Push A","exercise":"OHE","weight":66,"reps":10},
   {"id":1783542490167.4539,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":60.5,"reps":10},
-  {"id":1783542695278.2146,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":60.5,"reps":10}
+  {"id":1783542695278.2146,"date":"2026-07-08","day":"Push A","exercise":"Tricep Pushdown","weight":60.5,"reps":10},
+  {"id":1783695055358.0112,"date":"2026-07-10","day":"Legs A","exercise":"Hack Squat","weight":180,"reps":8},
+  {"id":1783695525032.0967,"date":"2026-07-10","day":"Legs A","exercise":"Hack Squat","weight":200,"reps":7},
+  {"id":1783695533951.628,"date":"2026-07-10","day":"Legs A","exercise":"RDL","weight":185,"reps":8},
+  {"id":1783695879964.3586,"date":"2026-07-10","day":"Legs A","exercise":"RDL","weight":225,"reps":5},
+  {"id":1783696341480.8215,"date":"2026-07-10","day":"Legs A","exercise":"Leg Extension","weight":180,"reps":10},
+  {"id":1783696348510.8694,"date":"2026-07-10","day":"Legs A","exercise":"Leg Extension","weight":200,"reps":8},
+  {"id":1783696550531.3794,"date":"2026-07-10","day":"Legs A","exercise":"Seated Calf Raise","weight":290,"reps":20},
+  {"id":1783696906497.5488,"date":"2026-07-10","day":"Legs A","exercise":"Leg Curl","weight":180,"reps":8},
+  {"id":1783696911759.6084,"date":"2026-07-10","day":"Legs A","exercise":"Leg Curl","weight":180,"reps":8},
+  {"id":1783697011910.9927,"date":"2026-07-10","day":"Legs A","exercise":"Seated Calf Raise","weight":300,"reps":15},
+  {"id":1783782013452.8123,"date":"2026-07-11","day":"Push B","exercise":"Dumbbell Incline Press","weight":45,"reps":12},
+  {"id":1783782018253.7014,"date":"2026-07-11","day":"Push B","exercise":"Dumbbell Incline Press","weight":60,"reps":10},
+  {"id":1783782021893.723,"date":"2026-07-11","day":"Push B","exercise":"Dumbbell Incline Press","weight":65,"reps":8},
+  {"id":1783782497696.487,"date":"2026-07-11","day":"Push B","exercise":"Machine Flat Press","weight":45,"reps":10},
+  {"id":1783782502536.4878,"date":"2026-07-11","day":"Push B","exercise":"Machine Flat Press","weight":45,"reps":8},
+  {"id":1783782508560.5527,"date":"2026-07-11","day":"Push B","exercise":"Machine Flat Press","weight":60,"reps":6},
+  {"id":1783782911893.7869,"date":"2026-07-11","day":"Push B","exercise":"OHE","weight":66,"reps":10},
+  {"id":1783782915430.4558,"date":"2026-07-11","day":"Push B","exercise":"OHE","weight":66,"reps":10},
+  {"id":1783783042941.3386,"date":"2026-07-11","day":"Push B","exercise":"Chest Fly","weight":140,"reps":10},
+  {"id":1783783353953.2634,"date":"2026-07-11","day":"Push B","exercise":"Chest Fly","weight":140,"reps":10},
+  {"id":1783783424100.0566,"date":"2026-07-11","day":"Push B","exercise":"Tricep Pushdown","weight":71.5,"reps":10},
+  {"id":1783786920390.5142,"date":"2026-07-11","day":"Push B","exercise":"Tricep Pushdown","weight":66,"reps":10},
+  {"id":1783786924579.606,"date":"2026-07-11","day":"Push B","exercise":"Single Arm Machine Lateral Raise","weight":100,"reps":10},
+  {"id":1783786927917.7944,"date":"2026-07-11","day":"Push B","exercise":"Single Arm Machine Lateral Raise","weight":100,"reps":8},
+  {"id":1783891134260.9685,"date":"2026-07-12","day":"Pull B","exercise":"Chest Supported Row","weight":330,"reps":8},
+  {"id":1783891429052.429,"date":"2026-07-12","day":"Pull B","exercise":"Chest Supported Row","weight":330,"reps":8},
+  {"id":1783891736389.0725,"date":"2026-07-12","day":"Pull B","exercise":"Chest Supported Row","weight":350,"reps":8},
+  {"id":1783892148190.589,"date":"2026-07-12","day":"Pull B","exercise":"Kelso Shrug","weight":280,"reps":10},
+  {"id":1783892153371.459,"date":"2026-07-12","day":"Pull B","exercise":"Kelso Shrug","weight":280,"reps":8},
+  {"id":1783892561053.2185,"date":"2026-07-12","day":"Pull B","exercise":"Lat Pulldown","weight":121,"reps":10},
+  {"id":1783892836083.6885,"date":"2026-07-12","day":"Pull B","exercise":"Lat Pulldown","weight":143,"reps":8},
+  {"id":1783893072565.175,"date":"2026-07-12","day":"Pull B","exercise":"Lat Pulldown","weight":143,"reps":8},
+  {"id":1783893622171.5798,"date":"2026-07-12","day":"Pull B","exercise":"Rear Delt Fly","weight":120,"reps":8},
+  {"id":1783893636514.005,"date":"2026-07-12","day":"Pull B","exercise":"Rear Delt Fly","weight":110,"reps":12},
+  {"id":1783893957424.6045,"date":"2026-07-12","day":"Pull B","exercise":"Rear Delt Fly","weight":110,"reps":10},
+  {"id":1783895954903.3398,"date":"2026-07-12","day":"Pull B","exercise":"Shrugs","weight":210,"reps":12},
+  {"id":1783895961984.7166,"date":"2026-07-12","day":"Pull B","exercise":"Shrugs","weight":240,"reps":12},
+  {"id":1783895975318.2576,"date":"2026-07-12","day":"Pull B","exercise":"Shrugs","weight":260,"reps":12},
+  {"id":1783895980080.1284,"date":"2026-07-12","day":"Pull B","exercise":"Incline Dumbbell Curl","weight":30,"reps":10},
+  {"id":1783895983631.4077,"date":"2026-07-12","day":"Pull B","exercise":"Incline Dumbbell Curl","weight":30,"reps":10},
+  {"id":1783895988009.5017,"date":"2026-07-12","day":"Pull B","exercise":"Incline Dumbbell Curl","weight":30,"reps":9},
+  {"id":1783896113242.8418,"date":"2026-07-12","day":"Pull B","exercise":"Hammer Curl","weight":35,"reps":10},
+  {"id":1783896319632.9836,"date":"2026-07-12","day":"Pull B","exercise":"Hammer Curl","weight":35,"reps":10},
+  {"id":1783950445185.3076,"date":"2026-07-13","day":"Legs B","exercise":"Hack Squat","weight":210,"reps":6},
+  {"id":1783950971794.3147,"date":"2026-07-13","day":"Legs B","exercise":"Hack Squat","weight":210,"reps":6},
+  {"id":1783950977650.5334,"date":"2026-07-13","day":"Legs B","exercise":"Hack Squat","weight":180,"reps":6},
+  {"id":1783951295620.9326,"date":"2026-07-13","day":"Legs B","exercise":"Seated Leg Curl","weight":170,"reps":10},
+  {"id":1783951535899.079,"date":"2026-07-13","day":"Legs B","exercise":"Seated Leg Curl","weight":170,"reps":10},
+  {"id":1783951817151.3794,"date":"2026-07-13","day":"Legs B","exercise":"Seated Leg Curl","weight":170,"reps":8},
+  {"id":1783952139016.578,"date":"2026-07-13","day":"Legs B","exercise":"Leg Extension","weight":200,"reps":8},
+  {"id":1783952143295.5688,"date":"2026-07-13","day":"Legs B","exercise":"Leg Extension","weight":200,"reps":8},
+  {"id":1783952438876.518,"date":"2026-07-13","day":"Legs B","exercise":"Standing Calf","weight":140,"reps":12},
+  {"id":1783952442721.5723,"date":"2026-07-13","day":"Legs B","exercise":"Standing Calf","weight":140,"reps":12},
+  {"id":1783952454384.654,"date":"2026-07-13","day":"Legs B","exercise":"Leg Extension","weight":200,"reps":6},
+  {"id":1783952621708.4841,"date":"2026-07-13","day":"Legs B","exercise":"Standing Calf","weight":160,"reps":10},
+  {"id":1783952876428.7725,"date":"2026-07-13","day":"Legs B","exercise":"Cable Crunch","weight":90,"reps":15},
+  {"id":1783953159554.484,"date":"2026-07-13","day":"Legs B","exercise":"Cable Crunch","weight":95,"reps":12}
 ];
+
 const DEFAULT_PEPTIDE_TAKEN = {
-  "ghk": ["2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08"],
-  "reta": ["2026-07-01","2026-07-08"],
-  "tesa": ["2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07"],
-  "ipam": ["2026-07-03_PM","2026-07-04_AM","2026-07-04_PM","2026-07-05_AM","2026-07-05_PM","2026-07-06_AM","2026-07-06_PM","2026-07-07_AM","2026-07-07_PM","2026-07-08_AM","2026-07-08_PM"]
+  "ghk": [
+    "2026-07-02",
+    "2026-07-03",
+    "2026-07-04",
+    "2026-07-05",
+    "2026-07-06",
+    "2026-07-07",
+    "2026-07-08",
+    "2026-07-09",
+    "2026-07-10",
+    "2026-07-11",
+    "2026-07-12"
+  ],
+  "reta": [
+    "2026-07-01",
+    "2026-07-08"
+  ],
+  "tesa": [
+    "2026-07-03",
+    "2026-07-04",
+    "2026-07-05",
+    "2026-07-06",
+    "2026-07-07",
+    "2026-07-10",
+    "2026-07-11",
+    "2026-07-12"
+  ],
+  "ipam": [
+    "2026-07-03_PM",
+    "2026-07-04_AM",
+    "2026-07-04_PM",
+    "2026-07-05_AM",
+    "2026-07-05_PM",
+    "2026-07-06_AM",
+    "2026-07-06_PM",
+    "2026-07-07_AM",
+    "2026-07-07_PM",
+    "2026-07-08_AM",
+    "2026-07-08_PM",
+    "2026-07-09_AM",
+    "2026-07-09_PM",
+    "2026-07-10_AM",
+    "2026-07-11_AM",
+    "2026-07-11_PM",
+    "2026-07-12_AM",
+    "2026-07-12_PM",
+    "2026-07-13_AM"
+  ]
+};
+
+const DEFAULT_PEPTIDE_TIMES = {
+  "ipam": {
+    "2026-07-09_AM": "08:00",
+    "2026-07-09_PM": "01:01",
+    "2026-07-10_AM": "10:21",
+    "2026-07-11_AM": "10:13",
+    "2026-07-11_PM": "02:12",
+    "2026-07-12_AM": "12:58",
+    "2026-07-12_PM": "00:36",
+    "2026-07-13_AM": "09:47"
+  },
+  "ghk": {
+    "2026-07-09": "23:16",
+    "2026-07-10": "00:14",
+    "2026-07-11": "02:11",
+    "2026-07-12": "00:36"
+  },
+  "tesa": {
+    "2026-07-10": "10:12",
+    "2026-07-11": "02:11",
+    "2026-07-12": "00:36"
+  }
 };
 const FIX_IDS = new Set([1783469043310.9915,1783469452941.3972,1783469462720.3025,1783469471007.5464,1783469890393.2158,1783469894747.4841,1783469905989.8408,1783469909941.6238,1783471387998.2166,1783471398762.8489,1783471407191.6333]);
 
@@ -571,6 +780,17 @@ function getPR(name) {
   return entries.reduce((max, e) => e.weight > max.weight ? e : max, entries[0]);
 }
 
+// Best set from the most recent session before the given date, for
+// "last time" reference while logging (progressive overload cue).
+function getLastSession(name, beforeDate) {
+  const entries = getExerciseLogs(name).filter(e => e.date < beforeDate);
+  if (!entries.length) return null;
+  const mostRecentDate = entries[0].date;
+  const sameDay = entries.filter(e => e.date === mostRecentDate);
+  const best = sameDay.reduce((max, e) => e.weight > max.weight ? e : max, sameDay[0]);
+  return { date: mostRecentDate, weight: best.weight, reps: best.reps };
+}
+
 const TAB_ORDER = ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"];
 
 function renderTabs() {
@@ -612,8 +832,13 @@ function render() {
   }
 
   main.innerHTML = "";
+  const deloadBanner = buildDeloadBanner();
+  if (deloadBanner) main.appendChild(deloadBanner);
+  main.appendChild(buildWeekSnapshot());
   info.exercises.forEach(name => {
     const pr = getPR(name);
+    const last = getLastSession(name, sessionDate);
+    const tip = getCoachTip(name, sessionDate);
     const todaysSets = logs.filter(l => l.exercise === name && l.date === sessionDate && l.day === currentDay);
 
     const card = document.createElement("div");
@@ -625,6 +850,8 @@ function render() {
       <div>
         <div class="ex-name">${name}</div>
         <div class="ex-hint">${todaysSets.length ? todaysSets.length + ' set' + (todaysSets.length === 1 ? '' : 's') + ' logged today' : 'No sets logged today'}</div>
+        ${last ? `<div class="ex-hint" style="color:var(--gold);">Last: ${last.weight}${last.reps ? ' x ' + last.reps : ''} &middot; ${formatDateLabel(last.date)}</div>` : ''}
+        ${tip ? `<div class="ex-hint" style="color:var(--pull); margin-top:3px; line-height:1.4;">💡 ${tip}</div>` : ''}
       </div>
       <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
     `;
@@ -653,12 +880,14 @@ function render() {
     card.appendChild(logrow);
 
     if (todaysSets.length) {
+      const baseline = getBaseline1RM(name, sessionDate);
       const expand = document.createElement("div");
       expand.className = "expand open";
       todaysSets.forEach((s, i) => {
+        const rpe = estimateRPE(s.weight, s.reps, baseline);
         const row = document.createElement("div");
         row.className = "entry-row";
-        row.innerHTML = `<span>Set ${i + 1}: ${s.weight}${s.reps ? ' x ' + s.reps : ''}</span><span class="del">Delete</span>`;
+        row.innerHTML = `<span>Set ${i + 1}: ${s.weight}${s.reps ? ' x ' + s.reps : ''}${rpe ? ` <span style="color:var(--sub);">&middot; est. RPE ${rpe}</span>` : ''}</span><span class="del">Delete</span>`;
         row.querySelector(".del").onclick = (ev) => {
           ev.stopPropagation();
           showConfirmModal(`Delete Set ${i + 1} (${s.weight}${s.reps ? ' x ' + s.reps : ''})? This can't be undone.`, "Delete", async () => {
@@ -693,6 +922,211 @@ function render() {
   };
   finishWrap.appendChild(finishBtn);
   main.appendChild(finishWrap);
+
+  main.appendChild(buildRecentSessionsSection());
+}
+
+let recentSessionsRange = 3; // days
+function buildRecentSessionsSection() {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "margin-top:6px; padding-bottom:24px;";
+
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;";
+  header.innerHTML = `<div style="font-weight:800; font-size:14px;">Recent Sessions</div>`;
+
+  const rangeTabs = document.createElement("div");
+  rangeTabs.style.cssText = "display:flex; gap:6px;";
+  [[3, "3 Days"], [7, "1 Week"], [14, "2 Weeks"]].forEach(([days, label]) => {
+    const btn = document.createElement("div");
+    btn.textContent = label;
+    const active = recentSessionsRange === days;
+    btn.style.cssText = `font-size:10.5px; font-weight:800; padding:6px 9px; border-radius:8px; cursor:pointer; ${active ? "background:var(--gold); color:#14171f;" : "background:var(--card-hi); color:var(--sub); border:1px solid var(--line);"}`;
+    btn.onclick = () => { recentSessionsRange = days; render(); };
+    rangeTabs.appendChild(btn);
+  });
+  header.appendChild(rangeTabs);
+  wrap.appendChild(header);
+
+  const sessions = getRecentSessions(recentSessionsRange);
+  if (!sessions.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No sessions logged in this range";
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
+  sessions.forEach(s => {
+    const card = document.createElement("div");
+    card.className = "exercise";
+    const head = document.createElement("div");
+    head.className = "ex-head";
+    head.style.cursor = "pointer";
+    const dateLabel = formatDateLabel(s.date);
+    head.innerHTML = `
+      <div>
+        <div class="ex-name">${s.day} <span style="color:var(--sub); font-weight:600;">&middot; ${dateLabel}</span></div>
+        <div class="ex-hint">${s.exerciseCount} exercise${s.exerciseCount === 1 ? '' : 's'} &middot; ${s.setCount} set${s.setCount === 1 ? '' : 's'}</div>
+      </div>
+    `;
+    card.appendChild(head);
+    let expanded = false;
+    head.onclick = () => {
+      expanded = !expanded;
+      detail.classList.toggle("open", expanded);
+    };
+    const detail = document.createElement("div");
+    detail.className = "expand";
+    Object.keys(s.byExercise).forEach(exName => {
+      const sets = s.byExercise[exName];
+      const row = document.createElement("div");
+      row.className = "entry-row";
+      row.innerHTML = `<span>${exName}</span><span style="color:var(--sub); font-weight:600;">${sets.map(x => x.weight + (x.reps ? 'x' + x.reps : '')).join(', ')}</span>`;
+      detail.appendChild(row);
+    });
+    card.appendChild(detail);
+    wrap.appendChild(card);
+  });
+
+  return wrap;
+}
+
+function formatDateLabel(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  const today = todayStr();
+  const yesterday = addDaysLocal(today, -1);
+  if (dateStr === today) return "Today";
+  if (dateStr === yesterday) return "Yesterday";
+  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function addDaysLocal(dateStr, n) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + n);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return yy + "-" + mm + "-" + dd;
+}
+
+const DELOAD_KEY = "ale-last-deload-v1";
+
+function computeAvgRPELast7Days() {
+  const cutoff = addDaysLocal(todayStr(), -6);
+  let total = 0, count = 0;
+  logs.forEach(l => {
+    if (l.date < cutoff || !l.reps) return;
+    const baseline = getBaseline1RM(l.exercise, l.date);
+    const rpe = estimateRPE(l.weight, l.reps, baseline);
+    if (rpe !== null) { total += rpe; count++; }
+  });
+  return count ? total / count : null;
+}
+
+function countDecliningExercises() {
+  let count = 0;
+  const allNames = [...new Set(Object.values(registry).flat())];
+  const cutoff = addDaysLocal(todayStr(), -14);
+  allNames.forEach(name => {
+    const entries = getExerciseLogs(name);
+    const dates = [...new Set(entries.map(e => e.date))];
+    if (dates.length < 2 || dates[0] < cutoff) return;
+    const trend = getTrendArrow(name);
+    if (trend && trend.arrow === "▼") count++;
+  });
+  return count;
+}
+
+function getDeloadStatus() {
+  const lastDeload = localStorage.getItem(DELOAD_KEY);
+  if (lastDeload && lastDeload >= addDaysLocal(todayStr(), -9)) return { flag: false };
+  const avgRPE = computeAvgRPELast7Days();
+  const declineCount = countDecliningExercises();
+  if ((avgRPE !== null && avgRPE >= 9) || declineCount >= 3) {
+    return { flag: true, avgRPE, declineCount };
+  }
+  return { flag: false };
+}
+
+function buildDeloadBanner() {
+  const status = getDeloadStatus();
+  if (!status.flag) return null;
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "background:#33301a; border:1px solid var(--gold); border-radius:14px; padding:14px; margin-bottom:12px;";
+  const reason = status.avgRPE >= 9
+    ? `Average estimated RPE across the last 7 days is ${status.avgRPE.toFixed(1)}`
+    : `${status.declineCount} exercises trending down over the last two sessions`;
+  wrap.innerHTML = `
+    <div style="font-weight:800; font-size:13.5px; color:var(--gold); margin-bottom:4px;">Deload signal</div>
+    <div style="font-size:12px; color:var(--sub); line-height:1.5; margin-bottom:10px;">${reason}. Consider a deload week: same exercises, roughly 40-50% less weight, stay around RPE 5-6.</div>
+  `;
+  const btn = document.createElement("button");
+  btn.textContent = "Log Deload Week";
+  btn.style.cssText = "width:100%; background:var(--gold); color:#14171f; border:none; border-radius:8px; padding:10px; font-weight:800; font-size:12.5px;";
+  btn.onclick = () => {
+    localStorage.setItem(DELOAD_KEY, todayStr());
+    showToast("Deload week logged");
+    render();
+  };
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function buildWeekSnapshot() {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; display:flex; gap:16px;";
+
+  const sevenDaysAgo = addDaysLocal(todayStr(), -6);
+  const sessionKeys = new Set();
+  logs.forEach(l => { if (l.date >= sevenDaysAgo) sessionKeys.add(l.date + "_" + l.day); });
+
+  let totalDue = 0, totalTaken = 0;
+  PEPTIDES.forEach(p => {
+    const a = getWeeklyAdherence(p);
+    totalDue += a.due;
+    totalTaken += a.taken;
+  });
+  const adherencePct = totalDue ? Math.round((totalTaken / totalDue) * 100) : 100;
+
+  wrap.innerHTML = `
+    <div style="flex:1;">
+      <div class="chart-stat-label">Sessions (7d)</div>
+      <div class="chart-stat-val">${sessionKeys.size}<span style="font-size:12px; color:var(--sub); font-weight:600;"> / 6</span></div>
+    </div>
+    <div style="flex:1;">
+      <div class="chart-stat-label">Peptide adherence</div>
+      <div class="chart-stat-val" style="color:${adherencePct >= 90 ? 'var(--pull)' : adherencePct >= 70 ? 'var(--gold)' : 'var(--legs)'}">${adherencePct}%</div>
+    </div>
+  `;
+  return wrap;
+}
+
+function getRecentSessions(rangeDays) {
+  const cutoff = addDaysLocal(todayStr(), -(rangeDays - 1));
+  const grouped = {};
+  logs.forEach(l => {
+    if (l.date < cutoff) return;
+    const key = l.date + "_" + l.day;
+    if (!grouped[key]) grouped[key] = { date: l.date, day: l.day, sets: [] };
+    grouped[key].sets.push(l);
+  });
+  return Object.values(grouped).sort((a, b) => b.date.localeCompare(a.date)).map(g => {
+    const byExercise = {};
+    g.sets.forEach(s => {
+      if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
+      byExercise[s.exercise].push(s);
+    });
+    return {
+      date: g.date,
+      day: g.day,
+      exerciseCount: Object.keys(byExercise).length,
+      setCount: g.sets.length,
+      byExercise
+    };
+  });
 }
 
 const FINISHED_KEY = "ale-finished-sessions-v1";
@@ -787,7 +1221,7 @@ let currentView = "log";
 document.getElementById("navbar").querySelectorAll(".navtab").forEach(tab => {
   tab.onclick = () => {
     currentView = tab.dataset.view;
-    document.querySelectorAll(".navtab").forEach(t => t.classList.remove("active"));
+    document.getElementById("navbar").querySelectorAll(".navtab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById("logView").style.display = currentView === "log" ? "" : "none";
     document.getElementById("dataView").style.display = currentView === "data" ? "" : "none";
@@ -801,12 +1235,51 @@ document.getElementById("navbar").querySelectorAll(".navtab").forEach(tab => {
   };
 });
 
+let dataSubView = "exercise";
+document.getElementById("dataSubNav").querySelectorAll(".navtab").forEach(tab => {
+  tab.onclick = () => {
+    dataSubView = tab.dataset.subview;
+    document.getElementById("dataSubNav").querySelectorAll(".navtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    renderDataView();
+  };
+});
+
 // ---------- PEPTIDE TRACKER ----------
+const INJECTION_SITES = ["Abdomen L", "Abdomen R", "Thigh L", "Thigh R", "Glute L", "Glute R", "Love Handle L", "Love Handle R"];
+// Sites to skip for specific peptides, per Ale's preference.
+const AVOID_SITES = {
+  ghk: ["Abdomen L", "Abdomen R"],
+  tesa: ["Abdomen L", "Abdomen R"],
+};
+
+function getEligibleSites(peptideId) {
+  const avoid = AVOID_SITES[peptideId] || [];
+  return INJECTION_SITES.filter(s => !avoid.includes(s));
+}
+
+// Suggests the eligible site that's gone longest without use (or never used).
+function getSuggestedSite(peptideId) {
+  const eligible = getEligibleSites(peptideId);
+  const siteLog = peptideLog.sites[peptideId] || {};
+  const lastUsedKey = {};
+  Object.keys(siteLog).sort().forEach(key => {
+    lastUsedKey[siteLog[key]] = key;
+  });
+  let best = eligible[0];
+  let bestKey = lastUsedKey[best] || "";
+  eligible.forEach(site => {
+    const key = lastUsedKey[site] || "";
+    if (key < bestKey) { best = site; bestKey = key; }
+  });
+  return best;
+}
+
 const PEPTIDES = [
-  { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#c1531f" },
-  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#2f6fd1" },
-  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#22945a" },
-  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#e8b84b" },
+  { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#c1531f", vialUnits: 300, unitsPerDose: 6 },
+  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#2f6fd1", vialUnits: 100, unitsPerDose: 10 },
+  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#22945a", vialUnits: 200, unitsPerDose: 20 },
+  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#e8b84b", vialUnits: 300, unitsPerDoseAM: 5, unitsPerDosePM: 5 },
 ];
 const PEPTIDE_KEY = "ale-peptide-log-v1";
 let peptideLog = { taken: {}, times: {} }; // taken: { [id]: [dateStr, ...] }, times: { [id]: { [key]: "HH:MM" } }
@@ -870,14 +1343,15 @@ async function loadPeptideLog() {
     if (value) {
       peptideLog = JSON.parse(value);
     } else {
-      peptideLog = { taken: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TAKEN)), times: {} };
+      peptideLog = { taken: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TAKEN)), times: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TIMES)), sites: {} };
       await savePeptideLog();
     }
   } catch (e) {
-    peptideLog = { taken: {}, times: {} };
+    peptideLog = { taken: {}, times: {}, sites: {} };
   }
   if (!peptideLog.taken) peptideLog.taken = {};
   if (!peptideLog.times) peptideLog.times = {};
+  if (!peptideLog.sites) peptideLog.sites = {};
 }
 async function savePeptideLog() {
   try {
@@ -885,6 +1359,67 @@ async function savePeptideLog() {
   } catch (e) {
     showToast("Save failed, try again");
   }
+}
+
+const VIAL_KEY = "ale-vial-tracker-v1";
+let vialTracker = {};
+function loadVialTracker() {
+  try {
+    vialTracker = JSON.parse(localStorage.getItem(VIAL_KEY) || "{}");
+  } catch (e) {
+    vialTracker = {};
+  }
+  PEPTIDES.forEach(p => {
+    if (!vialTracker[p.id]) vialTracker[p.id] = { startDate: p.start };
+  });
+}
+function saveVialTracker() {
+  localStorage.setItem(VIAL_KEY, JSON.stringify(vialTracker));
+}
+
+function estimateDaysRemaining(p, remaining) {
+  let perWeekUnits;
+  if (p.twiceDaily) perWeekUnits = (p.unitsPerDoseAM + p.unitsPerDosePM) * 7;
+  else if (p.pattern === "weekly") perWeekUnits = p.unitsPerDose;
+  else if (p.pattern === "5on2off") perWeekUnits = p.unitsPerDose * 5;
+  else perWeekUnits = p.unitsPerDose * 7; // daily / daily-finite
+  if (!perWeekUnits) return null;
+  return Math.round((remaining / perWeekUnits) * 7);
+}
+
+function getVialRemaining(p) {
+  const startDate = vialTracker[p.id] ? vialTracker[p.id].startDate : p.start;
+  let used = 0;
+  (peptideLog.taken[p.id] || []).forEach(key => {
+    const date = key.split("_")[0];
+    if (date < startDate) return;
+    if (p.twiceDaily) {
+      if (key.endsWith("_AM")) used += p.unitsPerDoseAM;
+      else if (key.endsWith("_PM")) used += p.unitsPerDosePM;
+    } else {
+      used += p.unitsPerDose;
+    }
+  });
+  return { remaining: Math.max(0, p.vialUnits - used), total: p.vialUnits, used };
+}
+
+function getWeeklyAdherence(p) {
+  const today = todayStr();
+  let due = 0, taken = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = addDaysLocal(today, -i);
+    const status = getPeptideStatus(p, d);
+    if (status.state !== "due") continue;
+    due++;
+    if (p.twiceDaily) {
+      const amDone = (peptideLog.taken[p.id] || []).includes(d + "_AM");
+      const pmDone = (peptideLog.taken[p.id] || []).includes(d + "_PM");
+      if (amDone && pmDone) taken++;
+    } else {
+      if ((peptideLog.taken[p.id] || []).includes(d)) taken++;
+    }
+  }
+  return { due, taken };
 }
 
 function renderPeptideView() {
@@ -945,11 +1480,14 @@ function renderPeptideView() {
         : `Day ${status.dayNum}`;
     }
 
+    const adherence = getWeeklyAdherence(p);
+
     card.innerHTML = `
       <div class="pep-top">
         <div>
           <div class="pep-name" style="color:${p.color}">${p.name}</div>
           <div class="pep-sub">${p.dose} &middot; ${subText}</div>
+          <div class="pep-sub" style="margin-top:2px;">This week: ${adherence.taken}/${adherence.due} due days hit</div>
         </div>
         ${pillHtml}
       </div>
@@ -959,24 +1497,31 @@ function renderPeptideView() {
       const actions = document.createElement("div");
       actions.className = "pep-actions";
       actions.style.flexWrap = "wrap";
+      const suggestedSite = getSuggestedSite(p.id);
+      const siteOptions = getEligibleSites(p.id).map(s => `<option value="${s}" ${s === suggestedSite ? 'selected' : ''}>${s}${s === suggestedSite ? ' (suggested)' : ''}</option>`).join("");
       actions.innerHTML = `
-        <input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:110px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">
+        <input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:100px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">
+        <select class="pep-site-input" style="flex:1; min-width:130px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">${siteOptions}</select>
         <button class="pep-btn ${takenAM ? 'done-btn' : ''}" data-slot="AM">${takenAM ? 'AM done' : 'Mark AM'}</button>
         <button class="pep-btn ${takenPM ? 'done-btn' : ''}" data-slot="PM">${takenPM ? 'PM done' : 'Mark PM'}</button>
       `;
       const timeInput = actions.querySelector(".pep-time-input");
+      const siteInput = actions.querySelector(".pep-site-input");
       actions.querySelectorAll("button").forEach(btn => {
         btn.onclick = async () => {
           const key = today + "_" + btn.dataset.slot;
           if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
           if (!peptideLog.times[p.id]) peptideLog.times[p.id] = {};
+          if (!peptideLog.sites[p.id]) peptideLog.sites[p.id] = {};
           const idx = peptideLog.taken[p.id].indexOf(key);
           if (idx >= 0) {
             peptideLog.taken[p.id].splice(idx, 1);
             delete peptideLog.times[p.id][key];
+            delete peptideLog.sites[p.id][key];
           } else {
             peptideLog.taken[p.id].push(key);
             peptideLog.times[p.id][key] = timeInput.value || nowTimeStr();
+            peptideLog.sites[p.id][key] = siteInput.value;
           }
           await savePeptideLog();
           renderPeptideView();
@@ -988,22 +1533,29 @@ function renderPeptideView() {
       actions.className = "pep-actions";
       actions.style.flexWrap = "wrap";
       const canToggle = status.state === "due";
+      const suggestedSite = getSuggestedSite(p.id);
+      const siteOptions = getEligibleSites(p.id).map(s => `<option value="${s}" ${s === suggestedSite ? 'selected' : ''}>${s}${s === suggestedSite ? ' (suggested)' : ''}</option>`).join("");
       actions.innerHTML = `
-        ${canToggle ? `<input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:110px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">` : ''}
+        ${canToggle ? `<input type="time" class="pep-time-input" value="${nowTimeStr()}" style="flex:1; min-width:100px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">` : ''}
+        ${canToggle ? `<select class="pep-site-input" style="flex:1; min-width:130px; background: var(--card-hi); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 9px 8px; font-size: 13px;">${siteOptions}</select>` : ''}
         <button class="pep-btn ${takenToday ? 'done-btn' : ''}" ${canToggle ? '' : 'disabled style="opacity:0.4"'}>${takenToday ? 'Mark not taken' : 'Mark taken'}</button>
       `;
       if (canToggle) {
         const timeInput = actions.querySelector(".pep-time-input");
+        const siteInput = actions.querySelector(".pep-site-input");
         actions.querySelector("button").onclick = async () => {
           if (!peptideLog.taken[p.id]) peptideLog.taken[p.id] = [];
           if (!peptideLog.times[p.id]) peptideLog.times[p.id] = {};
+          if (!peptideLog.sites[p.id]) peptideLog.sites[p.id] = {};
           const idx = peptideLog.taken[p.id].indexOf(today);
           if (idx >= 0) {
             peptideLog.taken[p.id].splice(idx, 1);
             delete peptideLog.times[p.id][today];
+            delete peptideLog.sites[p.id][today];
           } else {
             peptideLog.taken[p.id].push(today);
             peptideLog.times[p.id][today] = timeInput.value || nowTimeStr();
+            peptideLog.sites[p.id][today] = siteInput.value;
           }
           await savePeptideLog();
           renderPeptideView();
@@ -1015,6 +1567,7 @@ function renderPeptideView() {
     const dotsWrap = document.createElement("div");
     dotsWrap.className = "dots";
     const gridDates = buildGridDates(3);
+    const realToday = todayStr();
     gridDates.forEach(d => {
       const dStatus = getPeptideStatus(p, d);
       const dot = document.createElement("div");
@@ -1032,9 +1585,50 @@ function renderPeptideView() {
       }
       dot.className = cls;
       dot.title = d;
+      dot.textContent = String(parseInt(d.split("-")[2], 10));
+      dot.style.display = "flex";
+      dot.style.alignItems = "center";
+      dot.style.justifyContent = "center";
+      dot.style.fontSize = "9px";
+      dot.style.fontWeight = "700";
+      dot.style.color = cls.includes("taken") ? "#0b0d12" : "var(--sub)";
+      if (d === realToday) {
+        dot.style.outline = "2px solid var(--gold)";
+        dot.style.outlineOffset = "1px";
+      }
       dotsWrap.appendChild(dot);
     });
     card.appendChild(dotsWrap);
+
+    const vial = getVialRemaining(p);
+    const vialPct = Math.round((vial.remaining / vial.total) * 100);
+    const vialColor = vialPct > 30 ? "var(--pull)" : vialPct > 10 ? "var(--gold)" : "var(--legs)";
+    const daysLeft = estimateDaysRemaining(p, vial.remaining);
+    const vialWrap = document.createElement("div");
+    vialWrap.style.cssText = "margin-top:12px; padding-top:12px; border-top:1px solid var(--line);";
+    vialWrap.innerHTML = `
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:5px;">
+        <span style="font-weight:700;">Vial: ${vial.remaining}/${vial.total} units left</span>
+        <span style="color:${vialColor}; font-weight:700;">${vialPct}%</span>
+      </div>
+      <div style="background:var(--card-hi); border-radius:6px; height:8px; overflow:hidden; margin-bottom:8px;">
+        <div style="width:${vialPct}%; height:100%; background:${vialColor};"></div>
+      </div>
+      ${vialPct <= 30 ? `<div style="color:${vialColor}; font-size:11px; font-weight:700; margin-bottom:8px;">${vialPct <= 10 ? 'Critically low' : 'Getting low'}${daysLeft !== null ? ` &middot; ~${daysLeft} day${daysLeft === 1 ? '' : 's'} left at current pace` : ''}, reorder soon</div>` : ''}
+    `;
+    const newVialBtn = document.createElement("button");
+    newVialBtn.textContent = "Start New Vial";
+    newVialBtn.style.cssText = "width:100%; background:var(--card-hi); border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:8px; font-weight:700; font-size:11.5px;";
+    newVialBtn.onclick = () => {
+      showConfirmModal(`Mixed a new ${p.name} vial today? This resets the tracker to ${p.vialUnits} units remaining.`, "Start New Vial", () => {
+        vialTracker[p.id] = { startDate: todayStr() };
+        saveVialTracker();
+        showToast("New vial started");
+        renderPeptideView();
+      });
+    };
+    vialWrap.appendChild(newVialBtn);
+    card.appendChild(vialWrap);
 
     const allTaken = (peptideLog.taken[p.id] || []).slice().sort().reverse();
     if (allTaken.length) {
@@ -1044,14 +1638,16 @@ function renderPeptideView() {
       allTaken.forEach(key => {
         const [dateStr, slot] = key.split("_");
         const time = (peptideLog.times[p.id] || {})[key];
+        const site = (peptideLog.sites[p.id] || {})[key];
         const row = document.createElement("div");
         row.className = "entry-row";
-        row.innerHTML = `<span>${dateStr}${slot ? ' &middot; ' + slot : ''}${time ? ' &middot; ' + time : ''}</span><span class="del">Delete</span>`;
+        row.innerHTML = `<span>${dateStr}${slot ? ' &middot; ' + slot : ''}${time ? ' &middot; ' + time : ''}${site ? ' &middot; ' + site : ''}</span><span class="del">Delete</span>`;
         row.querySelector(".del").onclick = (ev) => {
           ev.stopPropagation();
           showConfirmModal(`Delete this ${p.name} dose log (${dateStr}${slot ? ' ' + slot : ''})? This can't be undone.`, "Delete", async () => {
             peptideLog.taken[p.id] = peptideLog.taken[p.id].filter(k => k !== key);
             if (peptideLog.times[p.id]) delete peptideLog.times[p.id][key];
+            if (peptideLog.sites[p.id]) delete peptideLog.sites[p.id][key];
             await savePeptideLog();
             renderPeptideView();
           });
@@ -1102,8 +1698,135 @@ function buildChartHtml(entriesDesc) {
   `;
 }
 
+// Compares the best set of the two most recent sessions for an exercise.
+// ---------- AUTO-RPE ENGINE ----------
+// Epley formula estimates a 1RM assuming the set was taken to true failure
+// (0 reps in reserve). Comparing a new set's estimated 1RM against a recent
+// known baseline tells us how far from failure it probably was, which maps
+// to RPE. This is an estimate, not a lab measurement, and needs at least
+// one prior logged session on that exercise to work.
+function epley1RM(weight, reps) {
+  return weight * (1 + reps / 30);
+}
+
+function getCoachTip(name, beforeDate) {
+  const range = REP_RANGE_MAP[name];
+  if (!range) return null;
+  const entries = getExerciseLogs(name);
+  const dates = [...new Set(entries.map(e => e.date))].filter(d => d < beforeDate).sort((a, b) => b.localeCompare(a));
+  if (!dates.length) return "Log a session or two here and I'll start giving tips.";
+
+  const lastDate = dates[0];
+  const lastSets = entries.filter(e => e.date === lastDate);
+  const topSet = lastSets.reduce((max, e) => e.weight > max.weight ? e : max, lastSets[0]);
+  const baselineForLast = getBaseline1RM(name, lastDate);
+  const rpeLast = estimateRPE(topSet.weight, topSet.reps, baselineForLast);
+
+  let regressed = false;
+  if (dates.length >= 2) {
+    const priorSets = entries.filter(e => e.date === dates[1]);
+    const priorTop = priorSets.reduce((max, e) => e.weight > max.weight ? e : max, priorSets[0]);
+    if (topSet.weight < priorTop.weight) regressed = true;
+  }
+
+  const [lo, hi] = range;
+  if (regressed) {
+    return "Dropped from the session before that, hold here and check sleep/food before pushing more.";
+  }
+  if (topSet.reps && topSet.reps >= hi) {
+    if (rpeLast !== null && rpeLast >= 9) {
+      return `Topped your rep range last time at a hard effort (est. RPE ${rpeLast}). Hold this weight one more session.`;
+    }
+    return `Topped your rep range last time. Try adding weight this session.`;
+  }
+  if (topSet.reps && topSet.reps < lo) {
+    return `Came in under range last time (${topSet.reps} reps). Hold weight, aim for ${lo}+.`;
+  }
+  return `In range last time. Build toward ${hi} reps before adding weight.`;
+}
+
+function getBaseline1RM(name, beforeDate) {
+  const windowStart = addDaysLocal(beforeDate, -60);
+  const priorSets = logs.filter(l => l.exercise === name && l.date < beforeDate && l.date >= windowStart && l.reps);
+  if (!priorSets.length) return null;
+  return Math.max(...priorSets.map(s => epley1RM(s.weight, s.reps)));
+}
+
+function estimateRPE(weight, reps, baseline1RM) {
+  if (!baseline1RM || !reps) return null;
+  const setE1RM = epley1RM(weight, reps);
+  const gapPct = (baseline1RM - setE1RM) / baseline1RM;
+  const rir = gapPct / 0.033; // ~3.3% of 1RM per rep in reserve, standard RPE-chart approximation
+  const rpe = Math.round((10 - rir) * 2) / 2; // nearest 0.5
+  return Math.max(1, Math.min(10, rpe));
+}
+
+function getTrendArrow(name) {
+  const entries = getExerciseLogs(name); // newest first
+  const dates = [...new Set(entries.map(e => e.date))];
+  if (dates.length < 2) return null;
+  const bestOnDate = d => entries.filter(e => e.date === d).reduce((max, e) => e.weight > max.weight ? e : max, entries[0]).weight;
+  const latest = bestOnDate(dates[0]);
+  const prior = bestOnDate(dates[1]);
+  if (latest > prior) return { arrow: "▲", color: "var(--pull)" };
+  if (latest < prior) return { arrow: "▼", color: "var(--legs)" };
+  return { arrow: "▬", color: "var(--sub)" };
+}
+
+function renderMuscleGroupView(list) {
+  list.innerHTML = "";
+
+  const note = document.createElement("div");
+  note.style.cssText = "color:var(--sub); font-size:11px; margin-bottom:12px; line-height:1.5;";
+  note.textContent = "Working sets logged in the trailing 7 days per muscle group. Research range for growth is roughly 8-20 sets/week.";
+  list.appendChild(note);
+
+  const sevenDaysAgo = addDaysLocal(todayStr(), -6);
+  const counts = {};
+  logs.forEach(l => {
+    if (l.date < sevenDaysAgo) return;
+    const muscle = MUSCLE_MAP[l.exercise];
+    if (!muscle) return;
+    counts[muscle] = (counts[muscle] || 0) + 1;
+  });
+
+  const allMuscles = [...new Set(Object.values(MUSCLE_MAP))];
+  const maxCount = Math.max(VOLUME_LANDMARKS.high, ...allMuscles.map(m => counts[m] || 0));
+
+  allMuscles.forEach(muscle => {
+    const count = counts[muscle] || 0;
+    const inRange = count >= VOLUME_LANDMARKS.low && count <= VOLUME_LANDMARKS.high;
+    const barColor = count === 0 ? "var(--card-hi)" : inRange ? "var(--pull)" : count < VOLUME_LANDMARKS.low ? "var(--legs)" : "var(--gold)";
+    const label = count === 0 ? "No sets this week" : inRange ? "In range" : count < VOLUME_LANDMARKS.low ? "Below range" : "Above range";
+    const pct = Math.min(100, (count / maxCount) * 100);
+
+    const row = document.createElement("div");
+    row.style.cssText = "margin-bottom:14px;";
+    row.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12.5px;">
+        <span style="font-weight:700;">${muscle}</span>
+        <span style="color:var(--sub);">${count} sets &middot; ${label}</span>
+      </div>
+      <div style="background:var(--card-hi); border-radius:6px; height:10px; overflow:hidden;">
+        <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:6px;"></div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
 function renderDataView() {
   const tabsEl = document.getElementById("dataTabs");
+  const list = document.getElementById("dataList");
+
+  if (dataSubView === "muscle") {
+    tabsEl.innerHTML = "";
+    tabsEl.style.display = "none";
+    renderMuscleGroupView(list);
+    return;
+  }
+  tabsEl.style.display = "";
+
   tabsEl.innerHTML = "";
   ["push", "pull", "legs"].forEach(type => {
     const div = document.createElement("div");
@@ -1114,7 +1837,6 @@ function renderDataView() {
     tabsEl.appendChild(div);
   });
 
-  const list = document.getElementById("dataList");
   list.innerHTML = "";
   const exercisesForType = registry[currentDataType] || [];
   const activeNames = new Set(Object.values(activeDays).filter(d => d.type === currentDataType).flatMap(d => d.exercises));
@@ -1123,6 +1845,7 @@ function renderDataView() {
     const entries = getExerciseLogs(name);
     const pr = getPR(name);
     const isRetired = !activeNames.has(name);
+    const trend = getTrendArrow(name);
 
     const card = document.createElement("div");
     card.className = "exercise";
@@ -1135,7 +1858,7 @@ function renderDataView() {
         <div class="ex-name">${name}${isRetired ? ' <span style="color:var(--sub); font-weight:600; font-size:10.5px;">(not in current routine)</span>' : ''}</div>
         <div class="ex-hint">${entries.length ? entries.length + ' session' + (entries.length === 1 ? '' : 's') + ' &middot; last ' + entries[0].date : 'No entries yet'}</div>
       </div>
-      <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
+      <div class="pr">${pr ? pr.weight : '—'}<span>PR</span> ${trend ? `<div style="text-align:center; margin-top:2px; font-size:12px; color:${trend.color};">${trend.arrow}</div>` : ''}</div>
     `;
     head.onclick = () => { expandedExercise = expandedExercise === name ? null : name; renderDataView(); };
     card.appendChild(head);
@@ -1212,14 +1935,78 @@ async function init() {
   loadWorkoutConfig();
   await loadLogs();
   await loadPeptideLog();
+  loadVialTracker();
   updateClock();
   setInterval(updateClock, 1000);
 }
 init();
 
+function buildCalcPanel() {
+  const panel = document.getElementById("calcPanel");
+  panel.innerHTML = `
+    <div class="exercise" style="padding:14px;">
+      <div style="font-weight:800; font-size:13.5px; margin-bottom:10px;">Reconstitution &amp; Dose Calculator</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="color:var(--sub); font-size:10.5px; font-weight:700; display:block; margin-bottom:4px;">VIAL SIZE (mg)</label>
+          <input type="number" id="calcVialMg" inputmode="decimal" style="width:100%; background:var(--card-hi); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:14px;">
+        </div>
+        <div>
+          <label style="color:var(--sub); font-size:10.5px; font-weight:700; display:block; margin-bottom:4px;">BAC WATER (mL)</label>
+          <input type="number" id="calcBacMl" inputmode="decimal" style="width:100%; background:var(--card-hi); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:14px;">
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+        <div>
+          <label style="color:var(--sub); font-size:10.5px; font-weight:700; display:block; margin-bottom:4px;">TARGET DOSE</label>
+          <input type="number" id="calcDose" inputmode="decimal" style="width:100%; background:var(--card-hi); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:14px;">
+        </div>
+        <div>
+          <label style="color:var(--sub); font-size:10.5px; font-weight:700; display:block; margin-bottom:4px;">UNIT</label>
+          <select id="calcDoseUnit" style="width:100%; background:var(--card-hi); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:14px;">
+            <option value="mg">mg</option>
+            <option value="mcg">mcg</option>
+          </select>
+        </div>
+      </div>
+      <div id="calcResult" style="background:var(--card-hi); border-radius:10px; padding:12px; text-align:center; font-weight:800; font-size:16px; color:var(--gold);">Enter values above</div>
+      <div style="color:var(--sub); font-size:10px; margin-top:8px; line-height:1.5;">Assumes a U-100 syringe (1 mL = 100 units). Double check against your own protocol before drawing.</div>
+    </div>
+  `;
+  const recalc = () => {
+    const vialMg = parseFloat(document.getElementById("calcVialMg").value);
+    const bacMl = parseFloat(document.getElementById("calcBacMl").value);
+    const doseVal = parseFloat(document.getElementById("calcDose").value);
+    const unit = document.getElementById("calcDoseUnit").value;
+    const result = document.getElementById("calcResult");
+    if (!vialMg || !bacMl || !doseVal) {
+      result.textContent = "Enter values above";
+      return;
+    }
+    const doseMg = unit === "mcg" ? doseVal / 1000 : doseVal;
+    const concentration = vialMg / bacMl; // mg per mL
+    const units = (doseMg / concentration) * 100;
+    result.textContent = units.toFixed(1) + " units";
+  };
+  ["calcVialMg", "calcBacMl", "calcDose", "calcDoseUnit"].forEach(id => {
+    document.getElementById(id).oninput = recalc;
+  });
+}
+
+document.getElementById("calcToggleBtn").onclick = () => {
+  const panel = document.getElementById("calcPanel");
+  const isOpen = panel.style.display !== "none";
+  if (isOpen) {
+    panel.style.display = "none";
+  } else {
+    buildCalcPanel();
+    panel.style.display = "block";
+  }
+};
+
 document.getElementById("exportBtn").onclick = () => {
   const workoutConfig = JSON.parse(localStorage.getItem(WORKOUT_CONFIG_KEY) || "{}");
-  const data = { trainingLogs: logs, peptideLog: peptideLog, workoutConfig: workoutConfig, exerciseRegistry: registry, exportedAt: new Date().toISOString() };
+  const data = { trainingLogs: logs, peptideLog: peptideLog, workoutConfig: workoutConfig, exerciseRegistry: registry, vialTracker: vialTracker, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1244,10 +2031,13 @@ document.getElementById("importFile").onchange = async (e) => {
     if (data.peptideLog) peptideLog = data.peptideLog;
     if (data.workoutConfig) localStorage.setItem(WORKOUT_CONFIG_KEY, JSON.stringify(data.workoutConfig));
     if (data.exerciseRegistry) registry = data.exerciseRegistry;
+    if (data.vialTracker) vialTracker = data.vialTracker;
     await saveLogs();
     await savePeptideLog();
     saveRegistry();
+    saveVialTracker();
     loadWorkoutConfig();
+    loadVialTracker();
     render();
     showToast("Backup restored");
   } catch (err) {
