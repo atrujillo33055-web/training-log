@@ -936,6 +936,46 @@ function showDayPickerModal() {
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
+function showSetEditModal(entry, onSave) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:24px;";
+  overlay.innerHTML = `
+    <div style="background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:320px; width:100%; box-shadow:var(--shadow);">
+      <div style="font-weight:800; font-size:14px; margin-bottom:14px; color:var(--text);">Edit ${entry.exercise}</div>
+      <label style="color:var(--sub); font-size:10px; font-weight:700; display:block; margin-bottom:4px;">DATE</label>
+      <input type="date" id="editDateInput" value="${entry.date}" style="width:100%; background:var(--card-hi); border:none; border-radius:12px; color:var(--text); padding:12px; font-size:14px; font-weight:700; margin-bottom:14px;">
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <div style="flex:1;">
+          <label style="color:var(--sub); font-size:10px; font-weight:700; display:block; margin-bottom:4px;">WEIGHT</label>
+          <input type="number" inputmode="decimal" id="editWeightInput" value="${entry.weight}" style="width:100%; background:var(--card-hi); border:none; border-radius:12px; color:var(--text); padding:12px; font-size:16px; text-align:center;">
+        </div>
+        <div style="flex:1;">
+          <label style="color:var(--sub); font-size:10px; font-weight:700; display:block; margin-bottom:4px;">REPS</label>
+          <input type="number" inputmode="numeric" id="editRepsInput" value="${entry.reps || ''}" style="width:100%; background:var(--card-hi); border:none; border-radius:12px; color:var(--text); padding:12px; font-size:16px; text-align:center;">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="editCancelBtn" style="flex:1; background:var(--card-hi); color:var(--sub); border:none; border-radius:12px; padding:12px; font-weight:800; font-size:13.5px;">Cancel</button>
+        <button id="editSaveBtn" style="flex:1; background:var(--gold); color:#0a0e12; border:none; border-radius:12px; padding:12px; font-weight:800; font-size:13.5px;">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const weightInput = overlay.querySelector("#editWeightInput");
+  weightInput.focus();
+  overlay.querySelector("#editCancelBtn").onclick = () => overlay.remove();
+  overlay.querySelector("#editSaveBtn").onclick = () => {
+    const rawWeight = overlay.querySelector("#editWeightInput").value;
+    const rawReps = overlay.querySelector("#editRepsInput").value;
+    const rawDate = overlay.querySelector("#editDateInput").value;
+    if (rawWeight === "") { showToast("Enter a weight (0 is fine)"); return; }
+    if (!rawDate) { showToast("Pick a date"); return; }
+    overlay.remove();
+    onSave(parseFloat(rawWeight), rawReps ? parseInt(rawReps) : null, rawDate);
+  };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
 function showTextInputModal(title, existingValue, onSave) {
   const overlay = document.createElement("div");
   overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:24px;";
@@ -1382,10 +1422,45 @@ function buildRecentSessionsSection() {
     detail.className = "expand";
     Object.keys(s.byExercise).forEach(exName => {
       const sets = s.byExercise[exName];
-      const dRow = document.createElement("div");
-      dRow.className = "entry-row";
-      dRow.innerHTML = `<span>${exName}</span><span style="color:var(--sub); font-weight:600;">${sets.map(x => x.weight + (x.reps ? 'x' + x.reps : '')).join(', ')}</span>`;
-      detail.appendChild(dRow);
+      const exLabel = document.createElement("div");
+      exLabel.style.cssText = "padding:9px 2px 2px; font-size:11px; font-weight:800; color:var(--sub-dim); text-transform:uppercase; letter-spacing:0.03em;";
+      exLabel.textContent = exName;
+      detail.appendChild(exLabel);
+
+      sets.forEach((set, i) => {
+        const dRow = document.createElement("div");
+        dRow.className = "entry-row";
+        dRow.innerHTML = `
+          <span>Set ${i + 1}: ${formatWeightDisplay(set)}${set.reps ? ' x ' + set.reps : ''}</span>
+          <span style="display:flex; gap:14px; align-items:center;">
+            <span class="edit-set" style="cursor:pointer; color:var(--sub);">${ICONS.pencil}</span>
+            <span class="del">${ICONS.trash}</span>
+          </span>
+        `;
+        dRow.querySelector(".edit-set").onclick = (ev) => {
+          ev.stopPropagation();
+          showSetEditModal(set, async (newWeight, newReps, newDate) => {
+            const target = logs.find(l => l.id === set.id);
+            if (target) {
+              target.weight = newWeight;
+              target.reps = newReps;
+              target.date = newDate;
+              await saveLogs();
+              showToast("Set updated");
+              render();
+            }
+          });
+        };
+        dRow.querySelector(".del").onclick = (ev) => {
+          ev.stopPropagation();
+          showConfirmModal(`Delete Set ${i + 1} (${formatWeightDisplay(set)}${set.reps ? ' x ' + set.reps : ''}) from ${exName}? This can't be undone.`, "Delete", async () => {
+            logs = logs.filter(l => l.id !== set.id);
+            await saveLogs();
+            render();
+          });
+        };
+        detail.appendChild(dRow);
+      });
     });
     row.appendChild(detail);
 
