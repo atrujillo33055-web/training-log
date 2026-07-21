@@ -986,13 +986,14 @@ function updateClock() {
 async function loadLogs() {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    if (value) {
-      logs = JSON.parse(value);
-    } else {
-      // Fresh install: seed with the corrected training history.
-      logs = JSON.parse(JSON.stringify(DEFAULT_LOGS));
-      await saveLogs();
-    }
+    // Fixed: this used to silently seed old baked-in mid-July data into
+    // localStorage (and therefore push it to the cloud) whenever a device
+    // was empty. That made sense before sync existed, empty always meant
+    // "brand new install." Now empty can also mean "existing user, new
+    // device, hasn't synced yet," and auto-writing stale data here can
+    // clobber the real thing on pull. Just start truly empty and let
+    // pullFromCloud (which runs before this) bring in the real data.
+    logs = value ? JSON.parse(value) : [];
   } catch (e) {
     logs = [];
   }
@@ -2298,12 +2299,9 @@ function getPeptideStatus(p, dateStr) {
 async function loadPeptideLog() {
   try {
     const value = localStorage.getItem(PEPTIDE_KEY);
-    if (value) {
-      peptideLog = JSON.parse(value);
-    } else {
-      peptideLog = { taken: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TAKEN)), times: JSON.parse(JSON.stringify(DEFAULT_PEPTIDE_TIMES)), sites: {} };
-      await savePeptideLog();
-    }
+    // Same fix as loadLogs: no more auto-seeding stale defaults into an
+    // empty device. Start empty, let a real pull fill it in.
+    peptideLog = value ? JSON.parse(value) : { taken: {}, times: {}, sites: {} };
   } catch (e) {
     peptideLog = { taken: {}, times: {}, sites: {} };
   }
@@ -3561,20 +3559,22 @@ async function pullFromCloud() {
   try {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const user = sessionData && sessionData.session && sessionData.session.user;
-    if (!user) return;
+    if (!user) return false;
     const { data, error } = await supabaseClient
       .from("app_state")
       .select("data")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (error || !data || !data.data) return;
+    if (error || !data || !data.data || Object.keys(data.data).length === 0) return false;
     Object.keys(data.data).forEach(k => {
       if (SYNC_KEYS.includes(k) && data.data[k] !== null && data.data[k] !== undefined) {
         localStorage.setItem(k, data.data[k]);
       }
     });
+    return true;
   } catch (e) {
     console.error("Pull from cloud failed", e);
+    return false;
   }
 }
 
@@ -3598,8 +3598,17 @@ function hideAuthGate() {
 
 async function startApp() {
   hideAuthGate();
-  await pullFromCloud();
+  const hadRealCloudData = await pullFromCloud();
   await init();
+  // Only auto-push if the cloud was genuinely empty (first-ever seed for
+  // this account). Once a real record exists up there, signing in on some
+  // other device never blind-pushes over it, pushes only happen from
+  // actual new writes going forward. This is the fix for the exact bug
+  // that wiped things: an emptier device can no longer stomp a fuller one
+  // just by being opened.
+  if (!hadRealCloudData) {
+    await pushToCloud();
+  }
 }
 
 async function checkAuthAndInit() {
