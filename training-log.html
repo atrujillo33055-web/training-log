@@ -3605,11 +3605,12 @@ const SYNC_KEYS = [
 
 let supabaseClient = null;
 let syncDebounceTimer = null;
+const LAST_LOCAL_WRITE_KEY = "ale-last-local-write-v1";
 
 function scheduleSync() {
   if (!supabaseClient) return;
   clearTimeout(syncDebounceTimer);
-  syncDebounceTimer = setTimeout(pushToCloud, 1500);
+  syncDebounceTimer = setTimeout(pushToCloud, 800);
 }
 
 async function pushToCloud() {
@@ -3637,10 +3638,23 @@ async function pullFromCloud() {
     if (!user) return false;
     const { data, error } = await supabaseClient
       .from("app_state")
-      .select("data")
+      .select("data, updated_at")
       .eq("user_id", user.id)
       .maybeSingle();
     if (error || !data || !data.data || Object.keys(data.data).length === 0) return false;
+
+    // If this device has a local edit newer than the cloud's last update,
+    // don't let the pull overwrite it. This is the fix for edits getting
+    // silently reverted: a push can lose the race if the app closes right
+    // after an edit (completely normal on mobile), and the old pull logic
+    // would blindly apply whatever was in the cloud regardless of which
+    // side was actually more recent. Push instead, to catch the cloud up.
+    const lastLocalWrite = localStorage.getItem(LAST_LOCAL_WRITE_KEY);
+    if (lastLocalWrite && data.updated_at && new Date(lastLocalWrite) > new Date(data.updated_at)) {
+      await pushToCloud();
+      return true;
+    }
+
     Object.keys(data.data).forEach(k => {
       if (SYNC_KEYS.includes(k) && data.data[k] !== null && data.data[k] !== undefined) {
         localStorage.setItem(k, data.data[k]);
@@ -3653,16 +3667,29 @@ async function pullFromCloud() {
   }
 }
 
-// Every write to a synced key schedules a debounced push. This means no
-// individual save function anywhere in the app needed to change, sync is
-// automatic the moment data actually changes.
+// Every write to a synced key records when it happened (so a later pull
+// can tell which side is newer) and schedules a debounced push. No
+// individual save function anywhere in the app needed to change for this.
 (function patchLocalStorage() {
   const originalSetItem = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function (key, value) {
     originalSetItem(key, value);
-    if (SYNC_KEYS.includes(key)) scheduleSync();
+    if (SYNC_KEYS.includes(key)) {
+      originalSetItem(LAST_LOCAL_WRITE_KEY, new Date().toISOString());
+      scheduleSync();
+    }
   };
 })();
+
+// If the app gets closed or backgrounded before the debounced push fires,
+// flush it right away instead of losing the edit. Closing the app
+// immediately after logging something is completely normal on mobile.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && syncDebounceTimer) {
+    clearTimeout(syncDebounceTimer);
+    pushToCloud();
+  }
+});
 
 function showAuthGate() {
   document.getElementById("authGate").style.display = "flex";
