@@ -361,9 +361,22 @@ const AB_EXERCISES = ["Cable Crunch", "Hanging Leg Raise", "Plank", "Ab Wheel", 
 
 const DEFAULT_PEPTIDES = [
   { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#ff6b4a", vialUnits: 300, unitsPerDose: 6, vialShelfLifeDays: 30 },
-  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#4dd4a0", vialUnits: 100, unitsPerDose: 10, vialShelfLifeDays: 30 },
-  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#b8e94a", vialUnits: 200, unitsPerDose: 20, vialShelfLifeDays: 30 },
-  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#2f8fff", vialUnits: 300, unitsPerDoseAM: 5, unitsPerDosePM: 5, vialShelfLifeDays: 30 },
+  { id: "reta", name: "Retatrutide", dose: "5 units, 0.5mg (from 7/29)", start: "2026-07-01", pattern: "weekly", color: "#4dd4a0", vialUnits: 100, unitsPerDose: 10, vialShelfLifeDays: 30 },
+  { id: "tesa", name: "Tesamorelin", dose: "10 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#b8e94a", vialUnits: 200, unitsPerDose: 20, vialShelfLifeDays: 30 },
+  { id: "ipam", name: "Ipamorelin", dose: "6 units AM + 6 PM (temp, until vial ~8/21)", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#2f8fff", vialUnits: 300, unitsPerDoseAM: 5, unitsPerDosePM: 5, vialShelfLifeDays: 30 },
+  // Custom multi-stage schedule the pattern system can't express as daily/weekly/5on2off:
+  // a single loading shot, then a twice-daily block, then a full pause, then an
+  // open-ended maintenance dose. See the 'phased' pattern helpers below.
+  {
+    id: "wolverine", name: "BPC-157 + TB-500", dose: "Phased dosing, see status below", start: "2026-07-27",
+    pattern: "phased", color: "#e07a9e", vialUnits: 100, vialShelfLifeDays: 30,
+    phases: [
+      { from: "2026-07-27", to: "2026-07-27", twiceDaily: false, unitsPerDose: 10, doseNote: "Loading dose: single 10-unit shot" },
+      { from: "2026-07-28", to: "2026-08-07", twiceDaily: true, unitsPerDoseAM: 5, unitsPerDosePM: 5, doseNote: "Twice daily: 5 units AM + 5 units PM" },
+      { from: "2026-08-08", to: "2026-08-11", off: true, doseNote: "Paused, no dose expected" },
+      { from: "2026-08-12", to: null, twiceDaily: false, unitsPerDose: 8, doseNote: "Maintenance: 8 units daily (7 on your weekly rest day, adjust manually when logging)" },
+    ],
+  },
 ];
 const PEPTIDE_COLORS = ["#ff6b4a", "#4dd4a0", "#b8e94a", "#2f8fff", "#6bb0e0", "#e07a9e", "#5fb8b0", "#8a99a3"];
 
@@ -1588,6 +1601,14 @@ function buildGridDates(weeks) {
 // Sunday-first day labels, shown on every card's grid so the columns are
 // always readable without scrolling back up to a single header row.
 const WEEK_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+// Finds the phase covering a date for a 'phased' peptide (custom multi-stage
+// schedules the daily/weekly/5on2off patterns can't express). Dates compare
+// lexicographically since they're all YYYY-MM-DD strings, same convention as
+// the rest of the app. `to: null` means open-ended.
+function getPhaseForDate(p, dateStr) {
+  if (!p.phases) return null;
+  return p.phases.find(ph => dateStr >= ph.from && (ph.to === null || ph.to === undefined || dateStr <= ph.to)) || null;
+}
 function getPeptideStatus(p, dateStr) {
   const diff = dayDiff(p.start, dateStr);
   if (diff < 0) return { state: "not-started" };
@@ -1607,7 +1628,36 @@ function getPeptideStatus(p, dateStr) {
     if (cyclePos < 5) return { state: "due", dayNum: cyclePos + 1, cycleNum, onOff: "on" };
     return { state: "off", dayNum: cyclePos - 4, cycleNum, onOff: "off" };
   }
+  if (p.pattern === "phased") {
+    const phase = getPhaseForDate(p, dateStr);
+    if (!phase) return { state: "off" };
+    if (phase.off) return { state: "off", phaseNote: phase.doseNote };
+    return { state: "due", phaseNote: phase.doseNote, phaseTwiceDaily: !!phase.twiceDaily };
+  }
   return { state: "due" };
+}
+// Whether a peptide is dosed twice a day on a given date. For phased
+// peptides this depends on which phase the date falls into, not a fixed
+// peptide-level flag, so every twiceDaily check needs a date to check against.
+function isTwiceDailyOn(p, dateStr) {
+  if (p.pattern === "phased") {
+    const phase = getPhaseForDate(p, dateStr);
+    return !!(phase && phase.twiceDaily);
+  }
+  return !!p.twiceDaily;
+}
+// Units for one dose on a given date/slot ("AM"/"PM"/null for a single daily
+// dose). Checks the matching phase for phased peptides, otherwise falls back
+// to the peptide's static unitsPerDose/unitsPerDoseAM/unitsPerDosePM.
+function getUnitsForDose(p, dateStr, slot) {
+  if (p.pattern === "phased") {
+    const phase = getPhaseForDate(p, dateStr);
+    if (!phase || phase.off) return 0;
+    if (phase.twiceDaily) return (slot === "PM" ? phase.unitsPerDosePM : phase.unitsPerDoseAM) || 0;
+    return phase.unitsPerDose || 0;
+  }
+  if (p.twiceDaily) return (slot === "PM" ? p.unitsPerDosePM : p.unitsPerDoseAM) || 0;
+  return p.unitsPerDose || 0;
 }
 function getWeeklyAdherence(p) {
   const today = todayStr();
@@ -1617,7 +1667,7 @@ function getWeeklyAdherence(p) {
     const status = getPeptideStatus(p, d);
     if (status.state !== "due") continue;
     due++;
-    if (p.twiceDaily) {
+    if (isTwiceDailyOn(p, d)) {
       const amDone = (appState.peptideLog.taken[p.id] || []).includes(d + "_AM");
       const pmDone = (appState.peptideLog.taken[p.id] || []).includes(d + "_PM");
       if (amDone && pmDone) taken++;
@@ -1653,18 +1703,21 @@ function getVialRemaining(p) {
   const startDate = (appState.vialTracker[p.id] && appState.vialTracker[p.id].startDate) || p.start;
   let used = 0;
   (appState.peptideLog.taken[p.id] || []).forEach(key => {
-    const date = key.split("_")[0];
+    const [date, slot] = key.split("_");
     if (date < startDate) return;
-    if (p.twiceDaily) {
-      if (key.endsWith("_AM")) used += p.unitsPerDoseAM;
-      else if (key.endsWith("_PM")) used += p.unitsPerDosePM;
-    } else { used += p.unitsPerDose; }
+    used += getUnitsForDose(p, date, slot || null);
   });
   return { remaining: Math.max(0, p.vialUnits - used), total: p.vialUnits, used };
 }
 function estimateDaysRemaining(p, remaining) {
   let perWeekUnits;
-  if (p.twiceDaily) perWeekUnits = (p.unitsPerDoseAM + p.unitsPerDosePM) * 7;
+  if (p.pattern === "phased") {
+    const phase = getPhaseForDate(p, todayStr());
+    // No active dosing rate to project during a paused phase, or past the
+    // last defined phase.
+    if (!phase || phase.off) return null;
+    perWeekUnits = phase.twiceDaily ? ((phase.unitsPerDoseAM || 0) + (phase.unitsPerDosePM || 0)) * 7 : (phase.unitsPerDose || 0) * 7;
+  } else if (p.twiceDaily) perWeekUnits = (p.unitsPerDoseAM + p.unitsPerDosePM) * 7;
   else if (p.pattern === "weekly") perWeekUnits = p.unitsPerDose;
   else if (p.pattern === "5on2off") perWeekUnits = p.unitsPerDose * 5;
   else perWeekUnits = p.unitsPerDose * 7;
@@ -1698,7 +1751,7 @@ function computeStreak() {
       const status = getPeptideStatus(p, d);
       if (status.state === "due") {
         dueCount++;
-        const done = p.twiceDaily
+        const done = isTwiceDailyOn(p, d)
           ? (appState.peptideLog.taken[p.id] || []).includes(d + "_AM") && (appState.peptideLog.taken[p.id] || []).includes(d + "_PM")
           : (appState.peptideLog.taken[p.id] || []).includes(d);
         if (done) takenCount++;
@@ -1721,7 +1774,7 @@ function getDosesTodayStat() {
     const status = getPeptideStatus(p, today);
     if (status.state !== "due") return;
     due++;
-    const done = p.twiceDaily
+    const done = isTwiceDailyOn(p, today)
       ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") && (appState.peptideLog.taken[p.id] || []).includes(today + "_PM")
       : (appState.peptideLog.taken[p.id] || []).includes(today);
     if (done) taken++;
@@ -1813,9 +1866,10 @@ async function renderPeptideTab() {
 
   for (const p of peptides) {
     const status = getPeptideStatus(p, today);
-    const takenAM = p.twiceDaily ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") : false;
-    const takenPM = p.twiceDaily ? (appState.peptideLog.taken[p.id] || []).includes(today + "_PM") : false;
-    const takenToday = p.twiceDaily ? (takenAM && takenPM) : (appState.peptideLog.taken[p.id] || []).includes(today);
+    const twiceToday = isTwiceDailyOn(p, today);
+    const takenAM = twiceToday ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") : false;
+    const takenPM = twiceToday ? (appState.peptideLog.taken[p.id] || []).includes(today + "_PM") : false;
+    const takenToday = twiceToday ? (takenAM && takenPM) : (appState.peptideLog.taken[p.id] || []).includes(today);
 
     const card = document.createElement("div");
     card.className = "card";
@@ -1823,24 +1877,27 @@ async function renderPeptideTab() {
 
     let pillHtml = "", subText = "";
     const adherence = getWeeklyAdherence(p);
+    // A phase note (from a phased peptide's schedule) always wins over the
+    // generic day-count text, since "Day N" is meaningless for a peptide
+    // whose dosing changes shape from one stretch of days to the next.
     if (status.state === "not-started") { pillHtml = `<span class="pill off">Not started</span>`; subText = `Starts ${p.start}`; }
     else if (status.state === "complete") { pillHtml = `<span class="pill off">Cycle complete</span>`; subText = `Finished day ${status.dayNum} of ${p.cycleDays}`; }
-    else if (status.state === "off") { pillHtml = `<span class="pill off">Off today</span>`; subText = p.pattern === "5on2off" ? `Off day ${status.dayNum} of 2 &middot; cycle ${status.cycleNum}` : `Next dose in ${status.daysUntil} day${status.daysUntil === 1 ? "" : "s"}`; }
-    else if (p.twiceDaily) {
+    else if (status.state === "off") { pillHtml = `<span class="pill off">Off today</span>`; subText = status.phaseNote || (p.pattern === "5on2off" ? `Off day ${status.dayNum} of 2 &middot; cycle ${status.cycleNum}` : `Next dose in ${status.daysUntil} day${status.daysUntil === 1 ? "" : "s"}`); }
+    else if (twiceToday) {
       const amTime = (appState.peptideLog.times[p.id] || {})[today + "_AM"];
       const pmTime = (appState.peptideLog.times[p.id] || {})[today + "_PM"];
       pillHtml = takenToday ? `<span class="pill taken">Both doses taken</span>` : (takenAM || takenPM) ? `<span class="pill taken">1 of 2 taken</span>` : `<span class="pill due">Due today</span>`;
       const timeBits = [];
       if (takenAM) timeBits.push("AM" + (amTime ? " " + amTime : ""));
       if (takenPM) timeBits.push("PM" + (pmTime ? " " + pmTime : ""));
-      subText = `Day ${status.dayNum}` + (timeBits.length ? ` &middot; ${timeBits.join(", ")}` : "");
+      subText = (status.phaseNote || `Day ${status.dayNum}`) + (timeBits.length ? ` &middot; ${timeBits.join(", ")}` : "");
     } else if (takenToday) {
       const takenTime = (appState.peptideLog.times[p.id] || {})[today];
       pillHtml = `<span class="pill taken">Taken today${takenTime ? " &middot; " + takenTime : ""}</span>`;
-      subText = p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}` : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}` : p.pattern === "weekly" ? `Week ${status.dayNum}` : `Day ${status.dayNum}`;
+      subText = status.phaseNote || (p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}` : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}` : p.pattern === "weekly" ? `Week ${status.dayNum}` : `Day ${status.dayNum}`);
     } else {
       pillHtml = `<span class="pill due">Due today</span>`;
-      subText = p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}` : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}` : p.pattern === "weekly" ? `Week ${status.dayNum}` : `Day ${status.dayNum}`;
+      subText = status.phaseNote || (p.pattern === "daily-finite" ? `Day ${status.dayNum} of ${p.cycleDays}` : p.pattern === "5on2off" ? `On day ${status.dayNum} of 5 &middot; cycle ${status.cycleNum}` : p.pattern === "weekly" ? `Week ${status.dayNum}` : `Day ${status.dayNum}`);
     }
 
     card.innerHTML = `
@@ -1855,7 +1912,7 @@ async function renderPeptideTab() {
       </div>
     `;
 
-    if (status.state === "due" && p.twiceDaily) {
+    if (status.state === "due" && twiceToday) {
       const actions = document.createElement("div");
       actions.style.cssText = "margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;";
       const suggestedSite = getSuggestedSite(p.id, today);
@@ -1965,7 +2022,7 @@ async function renderPeptideTab() {
       const dot = document.createElement("div");
       let bg = "var(--card-hi)";
       if (dStatus.state === "due") {
-        if (p.twiceDaily) {
+        if (isTwiceDailyOn(p, d)) {
           const amDone = (appState.peptideLog.taken[p.id] || []).includes(d + "_AM");
           const pmDone = (appState.peptideLog.taken[p.id] || []).includes(d + "_PM");
           if (amDone && pmDone) bg = "var(--push)";
@@ -2143,6 +2200,18 @@ function buildStackPanel() {
       showConfirmModal(`Remove ${p.name || "this peptide"} from your stack? Its logged history stays saved.`, "Remove", () => { row.remove(); refreshConflicts(); });
     };
     row.querySelector(".f-name").addEventListener("input", refreshConflicts);
+    // Phased peptides (custom multi-stage schedules) have no editor here, so
+    // stash their phases on the row to carry forward untouched on save,
+    // instead of the form silently flattening them into a single pattern.
+    if (p.pattern === "phased") {
+      row._phasedData = { phases: p.phases };
+      row.querySelector(".f-pattern").disabled = true;
+      row.querySelector(".f-twicedaily").disabled = true;
+      const phaseHint = document.createElement("div");
+      phaseHint.style.cssText = "color:var(--sub-dim); font-size:10.5px; margin:-2px 0 8px;";
+      phaseHint.textContent = "Phased schedule, not editable here. Pattern and units below are ignored.";
+      row.querySelector(".f-pattern").closest("div").parentElement.insertAdjacentElement("afterend", phaseHint);
+    }
     return row;
   };
   peptides.forEach(p => rows.appendChild(makeRow(p)));
@@ -2173,6 +2242,11 @@ function buildStackPanel() {
       if (pattern === "daily-finite") p.cycleDays = parseInt(row.querySelector(".f-cycledays").value) || 50;
       if (twiceDaily) { p.unitsPerDoseAM = parseFloat(row.querySelector(".f-unitsam").value) || 0; p.unitsPerDosePM = parseFloat(row.querySelector(".f-unitspm").value) || 0; p.vialUnits = parseFloat(row.querySelector(".f-vialunits2").value) || 0; }
       else { p.unitsPerDose = parseFloat(row.querySelector(".f-unitsdose").value) || 0; p.vialUnits = parseFloat(row.querySelector(".f-vialunits").value) || 0; }
+      if (row._phasedData) {
+        p.pattern = "phased";
+        p.phases = row._phasedData.phases;
+        delete p.twiceDaily; delete p.unitsPerDose; delete p.unitsPerDoseAM; delete p.unitsPerDosePM;
+      }
       newPeptides.push(p);
     });
     if (!newPeptides.length) { showToast("Add at least one peptide"); return; }
@@ -2608,7 +2682,7 @@ async function renderHomeView() {
   const dueList = peptides.filter(p => getPeptideStatus(p, today).state === "due");
   let doneCount = 0;
   dueList.forEach(p => {
-    const done = p.twiceDaily
+    const done = isTwiceDailyOn(p, today)
       ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") && (appState.peptideLog.taken[p.id] || []).includes(today + "_PM")
       : (appState.peptideLog.taken[p.id] || []).includes(today);
     if (done) doneCount++;
@@ -2624,9 +2698,10 @@ async function renderHomeView() {
   pepList.style.marginTop = "6px";
   if (!dueList.length) pepList.innerHTML = '<div class="empty" style="padding:16px 0;">Nothing due today</div>';
   dueList.forEach(p => {
-    const takenAM = p.twiceDaily ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") : false;
-    const takenPM = p.twiceDaily ? (appState.peptideLog.taken[p.id] || []).includes(today + "_PM") : false;
-    const takenToday = p.twiceDaily ? (takenAM && takenPM) : (appState.peptideLog.taken[p.id] || []).includes(today);
+    const twiceToday = isTwiceDailyOn(p, today);
+    const takenAM = twiceToday ? (appState.peptideLog.taken[p.id] || []).includes(today + "_AM") : false;
+    const takenPM = twiceToday ? (appState.peptideLog.taken[p.id] || []).includes(today + "_PM") : false;
+    const takenToday = twiceToday ? (takenAM && takenPM) : (appState.peptideLog.taken[p.id] || []).includes(today);
     const vial = getVialRemaining(p);
     const vialPct = Math.round((vial.remaining / vial.total) * 100);
     const lowVial = vialPct <= 30;
@@ -2641,13 +2716,13 @@ async function renderHomeView() {
     } else {
       // For twice-daily, if one dose is already in, note it and offer the other
       // slot right here, so both AM and PM can be logged from Home.
-      if (p.twiceDaily && (takenAM || takenPM)) {
+      if (twiceToday && (takenAM || takenPM)) {
         const lbl = document.createElement("span");
         lbl.style.cssText = "color:var(--gold); font-size:11.5px; font-weight:700;";
         lbl.textContent = takenAM ? "AM done" : "PM done";
         right.appendChild(lbl);
       }
-      const slot = p.twiceDaily ? (takenAM ? "PM" : "AM") : null;
+      const slot = twiceToday ? (takenAM ? "PM" : "AM") : null;
       const btn = document.createElement("button");
       btn.textContent = slot ? "Mark " + slot : "Mark";
       btn.style.cssText = "background:var(--card-hi); color:var(--text); border-radius:8px; padding:7px 14px; font-weight:700; font-size:11.5px;";
