@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Training Log">
 <meta name="theme-color" content="#0a0e12">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADS0lEQVR42u3SyXbaQBCGUa0zeWAwGPCAIYMT23nTPHLifQqlI+m4WnDPucte6C99zXr/E0KNEyAOusTxAqFmvXuBULPavUBIHIgDcTBsHM8QEgfioEscD88QEgfioEMc1w9PEBIH4kAciIO3iWP7BKHXOH5ASByIA3EwZBzL7Q8IiYO2OL5DqFnef4eQOBAH4kAcvFEcjxASB4fjWNw/QqhZ3D1CSByIg05xfIOQOBAH4mDQOG6/QUgcHI7j6vYrhMSBOBAH4kAcJMdx8wVC4kAciIMh45jffIGQOGiL4zOEqojj5dfvfzqmo49lbzPffE5XdKwKvvPU9orDXnGIQxziGDaOfbqyY+2Pxlj2isPew3HMNvt0Jceq4TtPba847G2JY71PV3SsCr7z1PaKw962OHbpyo61Oxpj2TvKOOo861DfLw5xiEMc4hDHkcax2qUrOlbx+zpX9NmbpZmuHtKVHKv8fZ0r+uzNIg5xiEMc4hCHOMQhDnFkx7FNV3as0vd1ruizN0szvd6mKzpW8fs6V/TZm0Uc4hh/HKemijgm19t0UvhbDf9FHOJoi+M+nRSiOPL/izjEIQ5xdIljeZ9OCkEcFfwXcYhDHOLoFMddOilEceT/F3GI43Acl8u7dFL4Ww3/ZTRxlL+vc0WfveIQR4VxLO7SFR2r+H2dK/rszfIax226smOVvq9zRZ+9WcQhDnGIQxziEIc4xCGO3DguFjfpSo5V/r7OFX32Zmkurm7SFR2r+H2dK/rszSIOcYhDHOIQx6nHMXYjimOTruxYm6Mxlr3isLcljvkmXdGxKvjOU9srDnsPx3E+36QrOVYN33lqe8Vhb1sc63Rlx1ofjbHsFYe94hCHOMQxaByzdbqiY1Xwnae2tzmmozN4HCsIiYPDcZzNVhASB+JAHAwax/QaQuJAHIgDcSAOcuP4NF1CSBy0xDFZQkgciANxMGwcCwiJA3HQJY7LBYSaj5cLCImDtjiuICQOxIE4EAdvE8fFFYRe45hDSBwcjuPDxRxC4kAciINh45hBqPlwPoOQOBAH4kAcvEkc78+nEBIH4qBLHGdTCIkDcdApjgmExIE4EAdDxvHubAKh5t2nCYRe47iEkDgQB//vD3vGqBNZHnFgAAAAAElFTkSuQmCC">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIlRyYWluaW5nIExvZyIsICJzaG9ydF9uYW1lIjogIlRyYWluaW5nIiwgInN0YXJ0X3VybCI6ICJodHRwczovL2F0cnVqaWxsbzMzMDU1LXdlYi5naXRodWIuaW8vdHJhaW5pbmctbG9nL3RyYWluaW5nLWxvZy5odG1sIiwgInNjb3BlIjogImh0dHBzOi8vYXRydWppbGxvMzMwNTUtd2ViLmdpdGh1Yi5pby90cmFpbmluZy1sb2cvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYTBlMTIiLCAidGhlbWVfY29sb3IiOiAiIzBhMGUxMiIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUxRQUFBQzBDQUlBQUFDeXI1RmxBQUFEUzBsRVFWUjQydTNTeVhiYVFCQ0dVYTB6ZVdBd0dQQ0FJWU1UMjNuVFBITGlmUXFsSSttNFduRFB1Y3RlNkM5OXpYci9FMEtORXlBT3VzVHhBcUZtdlh1QlVMUGF2VUJJSElnRGNUQnNITThRRWdmaW9Fc2NEODhRRWdmaW9FTWMxdzlQRUJJSDRrQWNpSU8zaVdQN0JLSFhPSDVBU0J5SUEzRXdaQnpMN1E4SWlZTzJPTDVEcUZuZWY0ZVFPQkFINGtBY3ZGRWNqeEFTQjRmaldOdy9RcWhaM0QxQ1NCeUlnMDV4ZklPUU9CQUg0bURRT0c2L1FVZ2NISTdqNnZZcmhNU0JPQkFINGtBY0pNZHg4d1ZDNGtBY2lJTWg0NWpmZklHUU9HaUw0ek9FcW9qajVkZnZmenFtbzQ5bGJ6UGZmRTVYZEt3S3Z2UFU5b3JEWG5HSVF4emlHRGFPZmJxeVkrMlB4bGoyaXNQZXczSE1OdnQwSmNlcTRUdFBiYTg0N0cySlk3MVBWM1NzQ3I3ejFQYUt3OTYyT0hicHlvNjFPeHBqMlR2S09Pbzg2MURmTHc1eGlFTWM0aERIa2NheDJxVXJPbGJ4K3pwWDlObWJwWm11SHRLVkhLdjhmWjByK3V6TklnNXhpRU1jNGhDSE9NUWhEbkZreDdGTlYzYXMwdmQxcnVpek4wc3p2ZDZtS3pwVzhmczZWL1RabTBVYzRoaC9IS2VtaWpnbTE5dDBVdmhiRGY5RkhPSm9pK00rblJTaU9QTC9pempFSVE1eGRJbGplWjlPQ2tFY0Zmd1hjWWhESE9Mb0ZNZGRPaWxFY2VUL0YzR0k0M0FjbDh1N2RGTDRXdzMvWlRSeGxMK3ZjMFdmdmVJUVI0VnhMTzdTRlIycitIMmRLL3JzemZJYXgyMjZzbU9WdnE5elJaKzlXY1FoRG5HSVF4emlFSWM0eENHTzNEZ3VGamZwU281Vi9yN09GWDMyWm1rdXJtN1NGUjJyK0gyZEsvcnN6U0lPY1loREhPSVF4Nm5ITVhZamltT1RydXhZbTZNeGxyM2lzTGNsanZrbVhkR3hLdmpPVTlzckRuc1B4M0UrMzZRck9WWU4zM2xxZThWaGIxc2M2M1JseDFvZmpiSHNGWWU5NGhDSE9NUXhhQnl6ZGJxaVkxWHduYWUydHptbW96TjRIQ3NJaVlQRGNaek5WaEFTQitKQUhBd2F4L1FhUXVKQUhJZ0RjU0FPY3VQNE5GMUNTQnkweERGWlFrZ2NpQU54TUd3Y0N3aUpBM0hRSlk3TEJZU2FqNWNMQ0ltRHRqaXVJQ1FPeElFNEVBZHZFOGZGRllSZTQ1aERTQndjanVQRHhSeEM0a0FjaUlOaDQ1aEJxUGx3UG9PUU9CQUg0a0FjdkVrYzc4K25FQklINHFCTEhHZFRDSWtEY2RBcGpnbUV4SUU0RUFkRHh2SHViQUtoNXQybkNZUmU0N2lFa0RnUUIvL3ZEM3ZHcUJOWkhuRmdBQUFBQUVsRlRrU3VRbUNDIiwgInNpemVzIjogIjE4MHgxODAiLCAidHlwZSI6ICJpbWFnZS9wbmciLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifV19">
 <title>Training Log</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -215,7 +217,7 @@
 </div>
 
 <header>
-  <h1>Training Log<span id="saveIndicator">●&nbsp;saving</span></h1>
+  <h1>Training Log<span id="saveIndicator">‚óè&nbsp;saving</span></h1>
   <p id="daylabel">Loading...</p>
   <p id="clocklabel" style="color: var(--sub); font-size: 11px; margin-top: 2px;"></p>
   <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
@@ -280,15 +282,16 @@
     <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">LOGGING FOR</label>
     <input type="date" id="peptideDate" style="width: 100%; background: var(--card); border: none; border-radius: var(--radius-sm); color: var(--text); padding: 10px; font-size: 14px; font-weight: 700; box-shadow: var(--shadow-sm);">
   </div>
-  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;">
+  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;">
     <button id="calcToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Dose Calculator</button>
     <button id="libraryToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Peptide Library</button>
     <button id="stackToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Manage Stack</button>
+    <button id="supplyToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Supply Forecast</button>
   </div>
   <div id="calcPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="libraryPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="stackPanel" style="display:none; margin-bottom:14px;"></div>
-  <div class="day-header-row" id="dayHeaderRow" style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:6px;"></div>
+  <div id="supplyPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="peptideCards"></div>
 </div>
 
@@ -367,6 +370,17 @@ const PEPTIDE_COLORS = ["#ff6b4a", "#4dd4a0", "#b8e94a", "#2f8fff", "#6bb0e0", "
 const INJECTION_SITES = ["Abdomen L", "Abdomen R", "Thigh L", "Thigh R", "Glute L", "Glute R", "Love Handle L", "Love Handle R"];
 const SITE_RESTRICTIONS = { ghk: ["Glute L", "Glute R"], tesa: ["Glute L", "Glute R"] };
 
+// Mechanism classes for conflict detection. A stack only gets flagged when two
+// peptides fall in the SAME class (two GLP-1s, two GHRH analogs), never across
+// classes: pairing a GHRH analog with a GHRP is a deliberate combo, not a clash.
+// Keywords are matched against the peptide name after stripping spaces/dashes,
+// so "MK-677", "mk677", and "MK 677" all resolve the same way.
+const MECHANISM_CLASSES = [
+  { label: "GLP-1 / incretin agonist", keywords: ["retatrutide", "tirzepatide", "semaglutide", "liraglutide", "dulaglutide", "exenatide", "mazdutide", "survodutide"] },
+  { label: "GHRH analog", keywords: ["tesamorelin", "cjc1295", "sermorelin", "modgrf", "modifiedgrf", "grf129"] },
+  { label: "GHRP / ghrelin agonist", keywords: ["ipamorelin", "mk677", "ibutamoren", "ghrp6", "ghrp2", "hexarelin", "ghrp"] },
+];
+
 const MEASUREMENT_TYPES = ["Weight", "Waist", "Chest", "Arms", "Thighs", "Hips", "Body Fat %"];
 const MEASUREMENT_UNITS = { "Weight": "lbs", "Waist": "in", "Chest": "in", "Arms": "in", "Thighs": "in", "Hips": "in", "Body Fat %": "%" };
 
@@ -424,14 +438,14 @@ function setSaveIndicator(state) {
   const el = document.getElementById("saveIndicator");
   if (!el) return;
   if (state === "saving") {
-    el.textContent = "● saving";
+    el.textContent = "‚óè saving";
     el.className = "show";
   } else if (state === "saved") {
-    el.textContent = "✓ saved";
+    el.textContent = "‚úì saved";
     el.className = "show";
     setTimeout(() => { el.className = ""; }, 1200);
   } else if (state === "error") {
-    el.textContent = "⚠ not saved";
+    el.textContent = "‚ö† not saved";
     el.className = "show err";
   }
 }
@@ -516,6 +530,13 @@ function formatDateLabel(dateStr) {
   return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+// Names (exercises, peptides) are user-editable and get injected into
+// innerHTML in a few card templates. Escape at the point of display so a
+// stray < or & can't break a card's layout. Data stays raw everywhere else.
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
 function epley1RM(weight, reps) { return weight * (1 + reps / 30); }
 const RPE_MIN_WEIGHT = 10;
 const RIR_PCT_DROPS = [0, 4, 8, 14, 22, 30, 38];
@@ -590,9 +611,9 @@ function getTrendArrow(name) {
   };
   const latest = e1RMOnDate(dates[0]);
   const prior = e1RMOnDate(dates[1]);
-  if (latest > prior * 1.01) return { arrow: "▲", color: "var(--push)" };
-  if (latest < prior * 0.99) return { arrow: "▼", color: "var(--legs)" };
-  return { arrow: "▬", color: "var(--sub)" };
+  if (latest > prior * 1.01) return { arrow: "‚ñ≤", color: "var(--push)" };
+  if (latest < prior * 0.99) return { arrow: "‚ñº", color: "var(--legs)" };
+  return { arrow: "‚ñ¨", color: "var(--sub)" };
 }
 // A note on a date means the lifter already explained what happened, don't
 // second-guess it with the automatic regression math.
@@ -605,7 +626,7 @@ function getCoachTip(name, beforeDate) {
 
   const lastDate = dates[0];
   if (appState.scheduleNotes[lastDate]) {
-    return `Note from that day: "${appState.scheduleNotes[lastDate]}" — not reading this as a decline.`;
+    return `Note from that day: "${appState.scheduleNotes[lastDate]}" ‚Äî not reading this as a decline.`;
   }
   const lastSets = entries.filter(e => e.date === lastDate);
   const topSet = pickRepresentativeSet(lastSets, range);
@@ -679,7 +700,7 @@ function countDecliningExercises() {
     const dates = [...new Set(entries.map(e => e.date))];
     if (dates.length < 2 || dates[0] < cutoff) return;
     const trend = getTrendArrow(name);
-    if (trend && trend.arrow === "▼") count++;
+    if (trend && trend.arrow === "‚ñº") count++;
   });
   return count;
 }
@@ -771,7 +792,7 @@ function showToast(msg, isError) {
 }
 function showPRToast(name, weight) {
   const t = document.getElementById("toast");
-  t.textContent = "🎉 New PR! " + weight + " on " + name;
+  t.textContent = "üéâ New PR! " + weight + " on " + name;
   t.className = "toast show pr-toast";
   setTimeout(() => t.classList.remove("show"), 2400);
 }
@@ -916,7 +937,7 @@ function buildSetLogRow(exerciseName, onLogged) {
 }
 
 // ============================================================
-// ABS QUICK LOG — now asks which exercise, uses the shared robust logger
+// ABS QUICK LOG ‚Äî now asks which exercise, uses the shared robust logger
 // ============================================================
 let absSelectedExercise = AB_EXERCISES[0];
 function buildAbsQuickLog() {
@@ -1070,7 +1091,7 @@ function renderExerciseEditor(main, info) {
     row.innerHTML = `
       <span class="drag-handle" style="color:var(--sub-dim); cursor:grab; flex-shrink:0; padding:4px;">${ICONS.grip}</span>
       <input type="text" value="${(name || '').replace(/"/g, '&quot;')}" placeholder="Exercise name" style="flex:1; background:var(--card-hi); border:none; border-radius:12px; color:var(--text); padding:9px 10px; font-size:13.5px;">
-      <button class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border-radius:12px; font-weight:800; padding:0 14px; height:38px;">×</button>
+      <button class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border-radius:12px; font-weight:800; padding:0 14px; height:38px;">√ó</button>
     `;
     row.querySelector(".removeRowBtn").onclick = () => row.remove();
     enableDragReorder(row, rows);
@@ -1111,7 +1132,7 @@ function renderExerciseEditor(main, info) {
       pairRow.innerHTML = `<span style="font-size:12.5px; font-weight:700;">${pair.join(" + ")}</span>`;
       const rm = document.createElement("span");
       rm.style.cssText = "color:var(--legs); cursor:pointer; font-weight:800; font-size:14px; padding:0 4px;";
-      rm.textContent = "×";
+      rm.textContent = "√ó";
       rm.onclick = () => { editorSupersets.splice(idx, 1); renderSupersetSection(); };
       pairRow.appendChild(rm);
       supersetSection.appendChild(pairRow);
@@ -1187,10 +1208,10 @@ function renderDayTabs() {
     div.className = "tab" + (day === currentDay ? " active" : "");
     div.dataset.type = info.type;
     div.textContent = day;
-    div.onclick = () => {
+    div.onclick = async () => {
       currentDay = day;
-      if (sessionDate === todayStr()) { appState.dayOverrides[sessionDate] = day; saveState(); }
       renderLogTab();
+      if (sessionDate === todayStr()) { appState.dayOverrides[sessionDate] = day; await saveState(); }
     };
     tabsEl.appendChild(div);
   });
@@ -1230,12 +1251,12 @@ function buildLogExerciseCard(name) {
   head.className = "card-head";
   head.innerHTML = `
     <div>
-      <div class="card-title" style="display:flex; align-items:center; gap:6px;"><span style="color:var(--sub-dim); display:inline-flex;">${ICONS.dumbbell}</span>${name}</div>
+      <div class="card-title" style="display:flex; align-items:center; gap:6px;"><span style="color:var(--sub-dim); display:inline-flex;">${ICONS.dumbbell}</span>${escapeHtml(name)}</div>
       <div class="card-hint">${todaysSets.length ? todaysSets.length + ' set' + (todaysSets.length === 1 ? '' : 's') + ' logged today' : 'No sets logged today'}</div>
       ${last ? `<div class="card-hint" style="color:var(--gold);">Last: ${formatWeightDisplay(last)}${last.reps ? ' x ' + last.reps : ''} &middot; ${formatDateLabel(last.date)}</div>` : ''}
-      ${tip ? `<div class="card-hint" style="color:var(--push); margin-top:3px; line-height:1.4;">${tipIsAi ? '✨' : '💡'} ${tip}</div>` : ''}
+      ${tip ? `<div class="card-hint" style="color:var(--push); margin-top:3px; line-height:1.4;">${tipIsAi ? '‚ú®' : 'üí°'} ${tip}</div>` : ''}
     </div>
-    <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
+    <div class="pr">${pr ? pr.weight : '‚Äî'}<span>PR</span></div>
   `;
   card.appendChild(head);
   card.appendChild(buildSetLogRow(name, () => renderLogTab()));
@@ -1428,7 +1449,7 @@ async function renderLogTab() {
   if (aiTipsForDay && aiTipsForDay.structuralNote) {
     const structNote = document.createElement("div");
     structNote.className = "hero-card";
-    structNote.innerHTML = `<div class="eyebrow" style="color:var(--gold); margin-bottom:4px;">✨ Coach note</div><div style="font-size:12.5px; color:var(--text); line-height:1.5;">${aiTipsForDay.structuralNote}</div>`;
+    structNote.innerHTML = `<div class="eyebrow" style="color:var(--gold); margin-bottom:4px;">‚ú® Coach note</div><div style="font-size:12.5px; color:var(--text); line-height:1.5;">${aiTipsForDay.structuralNote}</div>`;
     main.appendChild(structNote);
   }
 
@@ -1486,20 +1507,57 @@ function rebuildPeptides() {
 }
 async function savePeptideConfig() { appState.peptideConfig = peptides; await saveState(); }
 
+// ---- Mechanism conflict detection (advisory, never blocks a save) ----
+function classifyPeptideMechanism(name) {
+  const n = String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!n) return null;
+  for (const cls of MECHANISM_CLASSES) {
+    if (cls.keywords.some(k => n.includes(k))) return cls.label;
+  }
+  return null;
+}
+// Takes a list of peptides (or bare name strings) and returns one entry per
+// class that has 2+ members, e.g. { cls: "GLP-1 / incretin agonist", members: [...] }.
+function getStackConflicts(list) {
+  const byClass = {};
+  list.forEach(p => {
+    const name = (typeof p === "string" ? p : p.name || "").trim();
+    if (!name) return;
+    const cls = classifyPeptideMechanism(name);
+    if (!cls) return;
+    if (!byClass[cls]) byClass[cls] = [];
+    byClass[cls].push(name);
+  });
+  return Object.keys(byClass).filter(cls => byClass[cls].length >= 2).map(cls => ({ cls, members: byClass[cls] }));
+}
+function conflictBannerHtml(conflicts) {
+  if (!conflicts.length) return "";
+  const items = conflicts.map(c =>
+    `<div style="margin-top:6px;"><strong style="color:var(--text);">${escapeHtml(c.cls)}:</strong> ${c.members.map(escapeHtml).join(" + ")}. Same pathway, so stacking these may raise side effect load without adding much benefit.</div>`
+  ).join("");
+  return `<div style="background:rgba(255,107,74,0.12); border:1px solid rgba(255,107,74,0.35); border-radius:12px; padding:12px 14px; margin-bottom:12px;">
+    <div style="font-weight:800; font-size:12.5px; color:var(--legs); margin-bottom:2px;">Mechanism overlap</div>
+    <div style="font-size:11.5px; color:var(--sub); line-height:1.5;">${items}</div>
+  </div>`;
+}
+
 function dayDiff(startStr, dateStr) { return Math.round((parseUTC(dateStr) - parseUTC(startStr)) / 86400000); }
-function mondayOffset(dateStr) {
+// Days since the most recent Sunday (Sunday = 0). Weeks run Sun..Sat.
+function sundayOffset(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  return (wd + 6) % 7;
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 function buildGridDates(weeks) {
   const today = todayStr();
-  const mondayThisWeek = addDaysLocal(today, -mondayOffset(today));
-  const gridStart = addDaysLocal(mondayThisWeek, -7 * (weeks - 1));
+  const sundayThisWeek = addDaysLocal(today, -sundayOffset(today));
+  const gridStart = addDaysLocal(sundayThisWeek, -7 * (weeks - 1));
   const dates = [];
   for (let i = 0; i < weeks * 7; i++) dates.push(addDaysLocal(gridStart, i));
   return dates;
 }
+// Sunday-first day labels, shown on every card's grid so the columns are
+// always readable without scrolling back up to a single header row.
+const WEEK_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 function getPeptideStatus(p, dateStr) {
   const diff = dayDiff(p.start, dateStr);
   if (diff < 0) return { state: "not-started" };
@@ -1631,20 +1689,19 @@ function renderPeptideSnapshot() {
     <div style="flex:1;"><div class="eyebrow">Doses Today</div><div class="hero-number" style="font-size:24px; margin-top:4px;">${doses.taken}/${doses.due}</div></div>
   `;
 }
-function renderDayHeader() {
-  const row = document.getElementById("dayHeaderRow");
-  row.innerHTML = ["M", "T", "W", "T", "F", "S", "S"].map(l => `<div style="text-align:center; font-size:10px; font-weight:800; color:var(--sub-dim); text-transform:uppercase;">${l}</div>`).join("");
-}
-
 async function renderPeptideTab() {
   renderPeptideSnapshot();
-  renderDayHeader();
   const dateInput = document.getElementById("peptideDate");
   if (!dateInput.value) dateInput.value = todayStr();
   dateInput.onchange = () => renderPeptideTab();
   const today = dateInput.value;
   const wrap = document.getElementById("peptideCards");
   wrap.innerHTML = "";
+
+  const conflictByName = {};
+  getStackConflicts(peptides).forEach(c => {
+    c.members.forEach(m => { conflictByName[m] = c.members.filter(x => x !== m); });
+  });
 
   for (const p of peptides) {
     const status = getPeptideStatus(p, today);
@@ -1681,9 +1738,10 @@ async function renderPeptideTab() {
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px; color:${p.color};"><span style="display:inline-flex;">${ICONS.syringe}</span>${p.name}</div>
-          <div style="color:var(--sub); font-size:11.5px; margin-top:2px;">${p.dose} &middot; ${subText}</div>
+          <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px; color:${p.color};"><span style="display:inline-flex;">${ICONS.syringe}</span>${escapeHtml(p.name)}</div>
+          <div style="color:var(--sub); font-size:11.5px; margin-top:2px;">${escapeHtml(p.dose)} &middot; ${subText}</div>
           <div style="color:var(--sub); font-size:11.5px; margin-top:2px;">This week: ${adherence.taken}/${adherence.due} due days hit</div>
+          ${conflictByName[p.name] && conflictByName[p.name].length ? `<div style="color:var(--legs); font-size:11px; font-weight:700; margin-top:4px;">Same pathway as ${conflictByName[p.name].map(escapeHtml).join(", ")}</div>` : ''}
         </div>
         ${pillHtml}
       </div>
@@ -1772,8 +1830,13 @@ async function renderPeptideTab() {
     vialWrap.appendChild(newVialBtn);
     card.appendChild(vialWrap);
 
+    const letterRow = document.createElement("div");
+    letterRow.style.cssText = "display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:12px;";
+    letterRow.innerHTML = WEEK_LETTERS.map(l => `<div style="text-align:center; font-size:9px; font-weight:800; color:var(--sub-dim); text-transform:uppercase;">${l}</div>`).join("");
+    card.appendChild(letterRow);
+
     const dotsWrap = document.createElement("div");
-    dotsWrap.style.cssText = "display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:12px;";
+    dotsWrap.style.cssText = "display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:4px;";
     const gridDates = buildGridDates(3);
     const realToday = todayStr();
     gridDates.forEach(d => {
@@ -1921,7 +1984,18 @@ function buildStackPanel() {
   note.style.cssText = "color:var(--sub); font-size:11px; margin-bottom:12px; line-height:1.5;";
   note.textContent = "Add, edit, or remove peptides in your active stack. Dosing decisions are yours and whoever's supervising your protocol.";
   panel.appendChild(note);
+
+  const warning = document.createElement("div");
+  panel.appendChild(warning);
+
   const rows = document.createElement("div");
+  // Live overlap check: re-evaluates every time a name field changes or a row
+  // is added/removed, so you see a clash the moment you type the peptide in.
+  function refreshConflicts() {
+    const names = [...rows.querySelectorAll(".f-name")].map(i => i.value.trim()).filter(Boolean);
+    warning.innerHTML = conflictBannerHtml(getStackConflicts(names));
+  }
+
   const makeRow = (p) => {
     const row = document.createElement("div");
     row.className = "card";
@@ -1965,17 +2039,19 @@ function buildStackPanel() {
       row.querySelector(".twiceDoseWrap").style.display = e.target.checked ? "grid" : "none";
     };
     row.querySelector(".removeRowBtn").onclick = () => {
-      showConfirmModal(`Remove ${p.name || "this peptide"} from your stack? Its logged history stays saved.`, "Remove", () => row.remove());
+      showConfirmModal(`Remove ${p.name || "this peptide"} from your stack? Its logged history stays saved.`, "Remove", () => { row.remove(); refreshConflicts(); });
     };
+    row.querySelector(".f-name").addEventListener("input", refreshConflicts);
     return row;
   };
   peptides.forEach(p => rows.appendChild(makeRow(p)));
   panel.appendChild(rows);
+  refreshConflicts();
 
   const addBtn = document.createElement("button");
   addBtn.textContent = "+ Add Peptide";
   addBtn.style.cssText = "width:100%; margin-bottom:14px; background:var(--card-hi); border:1px dashed var(--line); color:var(--sub); border-radius:8px; padding:10px; font-weight:700; font-size:13px;";
-  addBtn.onclick = () => { rows.appendChild(makeRow({ pattern: "daily", start: todayStr() })); };
+  addBtn.onclick = () => { rows.appendChild(makeRow({ pattern: "daily", start: todayStr() })); refreshConflicts(); };
   panel.appendChild(addBtn);
 
   const actions = document.createElement("div");
@@ -2010,6 +2086,58 @@ function buildStackPanel() {
   cancelBtn.onclick = () => { document.getElementById("stackPanel").style.display = "none"; };
   actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
   panel.appendChild(actions);
+}
+
+// ============================================================
+// SUPPLY FORECAST ‚Äî every vial's runway in one place, soonest first
+// ============================================================
+// The single most urgent vial across the stack (an empty vial counts as 0 days).
+function getSoonestRunout() {
+  let best = null;
+  peptides.forEach(p => {
+    const vial = getVialRemaining(p);
+    const days = vial.remaining <= 0 ? 0 : estimateDaysRemaining(p, vial.remaining);
+    if (days === null) return;
+    if (!best || days < best.days) best = { name: p.name, days };
+  });
+  return best;
+}
+function buildSupplyPanel() {
+  const panel = document.getElementById("supplyPanel");
+  const rows = peptides.map(p => {
+    const vial = getVialRemaining(p);
+    const pct = vial.total ? Math.round((vial.remaining / vial.total) * 100) : 0;
+    const daysLeft = estimateDaysRemaining(p, vial.remaining);
+    const outDate = (daysLeft !== null && daysLeft >= 0 && vial.remaining > 0) ? addDaysLocal(todayStr(), daysLeft) : null;
+    return { p, vial, pct, daysLeft, outDate };
+  });
+  // Soonest to run out first; anything with no dose amount set sinks to the bottom.
+  rows.sort((a, b) => (a.daysLeft === null ? Infinity : a.daysLeft) - (b.daysLeft === null ? Infinity : b.daysLeft));
+
+  const list = rows.map(({ p, vial, pct, daysLeft, outDate }) => {
+    const color = pct > 30 ? "var(--push)" : pct > 10 ? "var(--gold)" : "var(--legs)";
+    let timing;
+    if (daysLeft === null) timing = "No dose amount set";
+    else if (vial.remaining <= 0) timing = "Out now, reorder";
+    else timing = `~${daysLeft} day${daysLeft === 1 ? "" : "s"} left, out around ${formatDateLabel(outDate)}`;
+    const emphasize = daysLeft !== null && pct <= 30;
+    return `
+      <div class="list-row" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+          <span class="list-row-title" style="color:${p.color};">${escapeHtml(p.name)}</span>
+          <span style="font-size:12.5px; font-weight:700; color:${color}; white-space:nowrap;">${vial.remaining}/${vial.total} u &middot; ${pct}%</span>
+        </div>
+        <div class="thin-bar" style="margin-top:8px;"><div class="thin-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div style="font-size:11px; color:${emphasize ? color : 'var(--sub)'}; font-weight:${emphasize ? 700 : 500}; margin-top:6px;">${timing}</div>
+      </div>`;
+  }).join("");
+
+  panel.innerHTML = `
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-weight:800; font-size:13.5px; margin-bottom:4px;">Supply forecast</div>
+      <div style="color:var(--sub); font-size:11px; margin-bottom:6px; line-height:1.5;">Every vial's runway in one place, soonest to run out first. Estimates use each peptide's current dose and pattern. Update a vial by tapping Start New Vial on its card.</div>
+      ${list || '<div class="empty">No peptides in your stack yet</div>'}
+    </div>`;
 }
 
 // ============================================================
@@ -2062,10 +2190,10 @@ function renderDataTab() {
       const head = document.createElement("div");
       head.className = "card-head";
       head.innerHTML = `
-        <div><div class="card-title">${name}</div><div class="card-hint">${entries.length} set${entries.length === 1 ? '' : 's'} logged</div></div>
+        <div><div class="card-title">${escapeHtml(name)}</div><div class="card-hint">${entries.length} set${entries.length === 1 ? '' : 's'} logged</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
           ${trend ? `<span style="color:${trend.color}; font-weight:800; font-size:14px;">${trend.arrow}</span>` : ''}
-          <div class="pr">${pr ? pr.weight : '—'}<span>PR</span></div>
+          <div class="pr">${pr ? pr.weight : '‚Äî'}<span>PR</span></div>
           <span style="color:var(--sub-dim); transition:transform 0.25s ease;" class="chev">${ICONS.chevron}</span>
         </div>
       `;
@@ -2077,6 +2205,12 @@ function renderDataTab() {
         chartWrap.style.padding = "10px 18px 4px";
         chartWrap.innerHTML = buildChartSvg(entries);
         expand.appendChild(chartWrap);
+        // Actual numbers on the chart: most recent set and the all-time best.
+        const latest = entries[0];
+        const caption = document.createElement("div");
+        caption.style.cssText = "display:flex; justify-content:space-between; gap:10px; padding:0 18px 8px; font-size:10.5px; color:var(--sub);";
+        caption.innerHTML = `<span>Latest: <strong style="color:var(--text);">${formatWeightDisplay(latest)}${latest.reps ? ' x ' + latest.reps : ''}</strong> &middot; ${formatDateLabel(latest.date)}</span><span>Best: <strong style="color:var(--gold);">${pr ? pr.weight : '‚Äî'}</strong></span>`;
+        expand.appendChild(caption);
       }
       entries.forEach(e => {
         const row = document.createElement("div");
@@ -2147,7 +2281,7 @@ function renderDataTab() {
             <circle cx="20" cy="20" r="${r}" fill="none" stroke="var(--card-hi)" stroke-width="4"/>
             <circle cx="20" cy="20" r="${r}" fill="none" stroke="${ringColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 20 20)"/>
           </svg>
-          <div style="min-width:0;"><div class="list-row-title">${muscle}</div>${suggestion ? `<div class="list-row-sub" style="line-height:1.4;">💡 ${suggestion}</div>` : `<div class="list-row-sub" style="color:${ringColor};">${label}</div>`}</div>
+          <div style="min-width:0;"><div class="list-row-title">${muscle}</div>${suggestion ? `<div class="list-row-sub" style="line-height:1.4;">üí° ${suggestion}</div>` : `<div class="list-row-sub" style="color:${ringColor};">${label}</div>`}</div>
         </div>
         <div style="text-align:right; flex-shrink:0; margin-left:10px;"><div style="font-size:15px; font-weight:800;">${count}</div><div style="font-size:9px; color:var(--sub-dim); text-transform:uppercase;">sets</div></div>
       `;
@@ -2172,9 +2306,11 @@ function renderDataTab() {
     `;
     formCard.querySelector("#measLogBtn").onclick = async () => {
       const type = formCard.querySelector("#measType").value;
-      const value = parseFloat(formCard.querySelector("#measValue").value);
+      const rawValue = formCard.querySelector("#measValue").value;
+      const value = parseFloat(rawValue);
       const date = formCard.querySelector("#measDate").value || todayStr();
-      if (!value) { showToast("Enter a value"); return; }
+      // Empty field is the only real invalid case, not a literal 0.
+      if (rawValue === "" || isNaN(value)) { showToast("Enter a value"); return; }
       appState.measurements.push({ id: Date.now() + Math.random(), date, type, value });
       await saveState();
       showToast("Logged");
@@ -2204,6 +2340,12 @@ function renderDataTab() {
         const asEntries = entries.map(e => ({ date: e.date, weight: e.value, reps: null }));
         chartWrap.innerHTML = buildChartSvg(asEntries);
         expand.appendChild(chartWrap);
+        const vals = entries.map(e => e.value);
+        const unit = MEASUREMENT_UNITS[type];
+        const caption = document.createElement("div");
+        caption.style.cssText = "display:flex; justify-content:space-between; gap:10px; padding:0 18px 8px; font-size:10.5px; color:var(--sub);";
+        caption.innerHTML = `<span>Latest: <strong style="color:var(--text);">${entries[0].value} ${unit}</strong></span><span>High ${Math.max(...vals)} &middot; Low ${Math.min(...vals)}</span>`;
+        expand.appendChild(caption);
       }
       entries.forEach(e => {
         const row = document.createElement("div");
@@ -2294,7 +2436,7 @@ async function renderHomeView() {
       <div style="font-size:22px; font-weight:800; letter-spacing:-0.03em;">${new Date(today + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}</div>
       <div style="color:var(--sub); font-size:12px; margin-top:1px;">${new Date(today + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}</div>
     </div>
-    <div style="color:var(--sub); font-size:12px; font-weight:600;">${streak > 0 ? `🔥 ${streak}d streak` : ''}</div>
+    <div style="color:var(--sub); font-size:12px; font-weight:600;">${streak > 0 ? `üî• ${streak}d streak` : ''}</div>
   `;
   home.appendChild(header);
 
@@ -2310,8 +2452,8 @@ async function renderHomeView() {
   const sessionKeys = new Set();
   appState.trainingLogs.forEach(l => { if (l.date >= sevenDaysAgo) sessionKeys.add(l.date + "_" + l.day); });
   let upCount = 0, downCount = 0;
-  info.exercises.forEach(name => { const t = getTrendArrow(name); if (t && t.arrow === "▲") upCount++; if (t && t.arrow === "▼") downCount++; });
-  const trendDisplay = upCount > downCount ? { icon: "▲", label: "Trending up this week" } : downCount > upCount ? { icon: "▼", label: "Trending down this week" } : { icon: "▬", label: "Holding steady" };
+  info.exercises.forEach(name => { const t = getTrendArrow(name); if (t && t.arrow === "‚ñ≤") upCount++; if (t && t.arrow === "‚ñº") downCount++; });
+  const trendDisplay = upCount > downCount ? { icon: "‚ñ≤", label: "Trending up this week" } : downCount > upCount ? { icon: "‚ñº", label: "Trending down this week" } : { icon: "‚ñ¨", label: "Holding steady" };
   const belowRange = getBelowRangeMuscles();
 
   const sessionCard = document.createElement("div");
@@ -2329,7 +2471,7 @@ async function renderHomeView() {
     <div style="margin-top:6px;">
       <div class="quiet-stat"><span class="quiet-stat-icon">${trendDisplay.icon}</span><span class="quiet-stat-label">${trendDisplay.label}</span></div>
       <div class="quiet-stat"><span class="quiet-stat-icon">${ICONS.dumbbell}</span><span class="quiet-stat-label">Sessions this week</span><span class="quiet-stat-val">${sessionKeys.size}/6</span></div>
-      <div class="quiet-stat" id="homeVolumeRow" style="cursor:pointer;"><span class="quiet-stat-icon" style="color:${belowRange.length ? 'var(--legs)' : 'var(--push)'};">●</span><span class="quiet-stat-label">${belowRange.length ? belowRange[0].muscle + ' below volume floor' : 'All muscle groups in range'}</span><span class="quiet-stat-val" style="color:var(--sub-dim);">›</span></div>
+      <div class="quiet-stat" id="homeVolumeRow" style="cursor:pointer;"><span class="quiet-stat-icon" style="color:${belowRange.length ? 'var(--legs)' : 'var(--push)'};">‚óè</span><span class="quiet-stat-label">${belowRange.length ? belowRange[0].muscle + ' below volume floor' : 'All muscle groups in range'}</span><span class="quiet-stat-val" style="color:var(--sub-dim);">‚Ä∫</span></div>
     </div>
   `;
   sessionCard.querySelector("#homeLogNowBtn").onclick = () => goToView("log");
@@ -2349,7 +2491,7 @@ async function renderHomeView() {
   pepCard.className = "hero-card";
   const pepHead = document.createElement("div");
   pepHead.style.cssText = "display:flex; justify-content:space-between; align-items:center;";
-  pepHead.innerHTML = `<div class="eyebrow">Peptides &middot; ${doneCount}/${dueList.length} due</div><div id="homePeptidesViewAll" style="color:var(--sub); font-size:11.5px; font-weight:600; cursor:pointer;">View all ›</div>`;
+  pepHead.innerHTML = `<div class="eyebrow">Peptides &middot; ${doneCount}/${dueList.length} due</div><div id="homePeptidesViewAll" style="color:var(--sub); font-size:11.5px; font-weight:600; cursor:pointer;">View all ‚Ä∫</div>`;
   pepHead.querySelector("#homePeptidesViewAll").onclick = () => goToView("peptides");
   pepCard.appendChild(pepHead);
   const pepList = document.createElement("div");
@@ -2364,15 +2506,27 @@ async function renderHomeView() {
     const lowVial = vialPct <= 30;
     const row = document.createElement("div");
     row.className = "list-row";
-    const statusText = takenToday ? `<span style="color:var(--push); font-size:11.5px; font-weight:700;">Taken</span>` : p.twiceDaily && (takenAM || takenPM) ? `<span style="color:var(--gold); font-size:11.5px; font-weight:700;">${takenAM ? 'AM done' : 'PM done'}</span>` : null;
-    row.innerHTML = `<div><div class="list-row-title">${p.name}</div>${lowVial ? `<div class="list-row-sub" style="color:var(--legs);">Vial ${vialPct}% left</div>` : ''}</div>`;
-    if (statusText) row.insertAdjacentHTML("beforeend", statusText);
-    else {
+    row.innerHTML = `<div><div class="list-row-title">${escapeHtml(p.name)}</div>${lowVial ? `<div class="list-row-sub" style="color:var(--legs);">Vial ${vialPct}% left</div>` : ''}</div>`;
+
+    const right = document.createElement("div");
+    right.style.cssText = "display:flex; align-items:center; gap:8px; flex-shrink:0;";
+    if (takenToday) {
+      right.innerHTML = `<span style="color:var(--push); font-size:11.5px; font-weight:700;">Taken</span>`;
+    } else {
+      // For twice-daily, if one dose is already in, note it and offer the other
+      // slot right here, so both AM and PM can be logged from Home.
+      if (p.twiceDaily && (takenAM || takenPM)) {
+        const lbl = document.createElement("span");
+        lbl.style.cssText = "color:var(--gold); font-size:11.5px; font-weight:700;";
+        lbl.textContent = takenAM ? "AM done" : "PM done";
+        right.appendChild(lbl);
+      }
+      const slot = p.twiceDaily ? (takenAM ? "PM" : "AM") : null;
       const btn = document.createElement("button");
-      btn.textContent = p.twiceDaily ? "Mark AM" : "Mark";
+      btn.textContent = slot ? "Mark " + slot : "Mark";
       btn.style.cssText = "background:var(--card-hi); color:var(--text); border-radius:8px; padding:7px 14px; font-weight:700; font-size:11.5px;";
       btn.onclick = async () => {
-        const key = p.twiceDaily ? today + "_AM" : today;
+        const key = slot ? today + "_" + slot : today;
         if (!appState.peptideLog.taken[p.id]) appState.peptideLog.taken[p.id] = [];
         if (!appState.peptideLog.times[p.id]) appState.peptideLog.times[p.id] = {};
         if (!appState.peptideLog.sites[p.id]) appState.peptideLog.sites[p.id] = {};
@@ -2380,14 +2534,27 @@ async function renderHomeView() {
         appState.peptideLog.times[p.id][key] = nowTimeStr();
         appState.peptideLog.sites[p.id][key] = getSuggestedSite(p.id, today);
         await saveState();
-        showToast(p.name + " logged");
+        showToast(p.name + (slot ? " " + slot : "") + " logged");
         renderHomeView();
       };
-      row.appendChild(btn);
+      right.appendChild(btn);
     }
+    row.appendChild(right);
     pepList.appendChild(row);
   });
   pepCard.appendChild(pepList);
+
+  // Reorder nudge: soonest vial to run out across the whole stack, one line.
+  const soon = getSoonestRunout();
+  if (soon) {
+    const line = document.createElement("div");
+    line.style.cssText = "font-size:11px; color:var(--sub); margin-top:10px; padding-top:10px; border-top:1px solid var(--line); cursor:pointer;";
+    line.innerHTML = soon.days <= 0
+      ? `<span style="color:var(--legs); font-weight:700;">Reorder now:</span> ${escapeHtml(soon.name)} is out`
+      : `Next to reorder: <strong style="color:var(--text);">${escapeHtml(soon.name)}</strong>, ~${soon.days} day${soon.days === 1 ? '' : 's'} left`;
+    line.onclick = () => goToView("peptides");
+    pepCard.appendChild(line);
+  }
   home.appendChild(pepCard);
 
   const weightEntries = getMeasurementEntries("Weight");
@@ -2426,7 +2593,7 @@ async function renderHomeView() {
 }
 
 // ============================================================
-// AI COACH TIPS — layered over local tips, cached per day, never blocks
+// AI COACH TIPS ‚Äî layered over local tips, cached per day, never blocks
 // ============================================================
 const AI_CACHE_KEY = "ale-ai-coach-cache-v1";
 function loadAiCache() { try { return JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}"); } catch (e) { return {}; } }
@@ -2501,30 +2668,18 @@ document.getElementById("dataSubNav").querySelectorAll(".seg-tab").forEach(tab =
   };
 });
 
-document.getElementById("calcToggleBtn").onclick = () => {
-  const panel = document.getElementById("calcPanel");
+const PEPTIDE_PANELS = ["calcPanel", "libraryPanel", "stackPanel", "supplyPanel"];
+function togglePeptidePanel(panelId, build) {
+  const panel = document.getElementById(panelId);
   const showing = panel.style.display !== "none";
+  PEPTIDE_PANELS.forEach(id => { if (id !== panelId) document.getElementById(id).style.display = "none"; });
   panel.style.display = showing ? "none" : "block";
-  document.getElementById("libraryPanel").style.display = "none";
-  document.getElementById("stackPanel").style.display = "none";
-  if (!showing) buildCalcPanel();
-};
-document.getElementById("libraryToggleBtn").onclick = () => {
-  const panel = document.getElementById("libraryPanel");
-  const showing = panel.style.display !== "none";
-  panel.style.display = showing ? "none" : "block";
-  document.getElementById("calcPanel").style.display = "none";
-  document.getElementById("stackPanel").style.display = "none";
-  if (!showing) buildLibraryPanel();
-};
-document.getElementById("stackToggleBtn").onclick = () => {
-  const panel = document.getElementById("stackPanel");
-  const showing = panel.style.display !== "none";
-  panel.style.display = showing ? "none" : "block";
-  document.getElementById("calcPanel").style.display = "none";
-  document.getElementById("libraryPanel").style.display = "none";
-  if (!showing) buildStackPanel();
-};
+  if (!showing) build();
+}
+document.getElementById("calcToggleBtn").onclick = () => togglePeptidePanel("calcPanel", buildCalcPanel);
+document.getElementById("libraryToggleBtn").onclick = () => togglePeptidePanel("libraryPanel", buildLibraryPanel);
+document.getElementById("stackToggleBtn").onclick = () => togglePeptidePanel("stackPanel", buildStackPanel);
+document.getElementById("supplyToggleBtn").onclick = () => togglePeptidePanel("supplyPanel", buildSupplyPanel);
 
 document.getElementById("scheduleNoteBtn").onclick = () => {
   const existing = appState.scheduleNotes[sessionDate] || "";
