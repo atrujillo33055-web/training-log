@@ -83,6 +83,7 @@
     display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700;
     color: var(--sub-dim); margin-left: 8px; opacity: 0; transition: opacity 0.2s ease;
   }
+  #saveIndicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   #saveIndicator.show { opacity: 1; }
   #saveIndicator.err { color: var(--legs); }
 
@@ -217,7 +218,7 @@
 </div>
 
 <header>
-  <h1>Training Log<span id="saveIndicator">‚óè&nbsp;saving</span></h1>
+  <h1>Training Log<span id="saveIndicator">Saving</span></h1>
   <p id="daylabel">Loading...</p>
   <p id="clocklabel" style="color: var(--sub); font-size: 11px; margin-top: 2px;"></p>
   <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
@@ -282,14 +283,13 @@
     <label style="color: var(--sub); font-size: 11.5px; font-weight: 700; display: block; margin-bottom: 6px;">LOGGING FOR</label>
     <input type="date" id="peptideDate" style="width: 100%; background: var(--card); border: none; border-radius: var(--radius-sm); color: var(--text); padding: 10px; font-size: 14px; font-weight: 700; box-shadow: var(--shadow-sm);">
   </div>
-  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;">
+  <div id="bacWaterCard" style="margin-bottom:12px;"></div>
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;">
     <button id="calcToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Dose Calculator</button>
-    <button id="libraryToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Peptide Library</button>
     <button id="stackToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Manage Stack</button>
     <button id="supplyToggleBtn" style="background:var(--card); color:var(--text); border-radius:10px; padding:10px 4px; font-size:11.5px; font-weight:700; box-shadow:var(--shadow-sm);">Supply Forecast</button>
   </div>
   <div id="calcPanel" style="display:none; margin-bottom:14px;"></div>
-  <div id="libraryPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="stackPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="supplyPanel" style="display:none; margin-bottom:14px;"></div>
   <div id="peptideCards"></div>
@@ -360,10 +360,10 @@ const REP_RANGE_MAP = {
 const AB_EXERCISES = ["Cable Crunch", "Hanging Leg Raise", "Plank", "Ab Wheel", "Weighted Sit Up"];
 
 const DEFAULT_PEPTIDES = [
-  { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#ff6b4a", vialUnits: 300, unitsPerDose: 6 },
-  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#4dd4a0", vialUnits: 100, unitsPerDose: 10 },
-  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#b8e94a", vialUnits: 200, unitsPerDose: 20 },
-  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#2f8fff", vialUnits: 300, unitsPerDoseAM: 5, unitsPerDosePM: 5 },
+  { id: "ghk", name: "GHK-Cu", dose: "6 units", start: "2026-07-02", pattern: "daily-finite", cycleDays: 50, color: "#ff6b4a", vialUnits: 300, unitsPerDose: 6, vialShelfLifeDays: 30 },
+  { id: "reta", name: "Retatrutide", dose: "10 units, 1mg", start: "2026-07-01", pattern: "weekly", color: "#4dd4a0", vialUnits: 100, unitsPerDose: 10, vialShelfLifeDays: 30 },
+  { id: "tesa", name: "Tesamorelin", dose: "20 units, PM", start: "2026-07-03", pattern: "5on2off", color: "#b8e94a", vialUnits: 200, unitsPerDose: 20, vialShelfLifeDays: 30 },
+  { id: "ipam", name: "Ipamorelin", dose: "5 units AM + 5 PM", start: "2026-07-03", pattern: "daily", twiceDaily: true, color: "#2f8fff", vialUnits: 300, unitsPerDoseAM: 5, unitsPerDosePM: 5, vialShelfLifeDays: 30 },
 ];
 const PEPTIDE_COLORS = ["#ff6b4a", "#4dd4a0", "#b8e94a", "#2f8fff", "#6bb0e0", "#e07a9e", "#5fb8b0", "#8a99a3"];
 
@@ -384,23 +384,12 @@ const MECHANISM_CLASSES = [
 const MEASUREMENT_TYPES = ["Weight", "Waist", "Chest", "Arms", "Thighs", "Hips", "Body Fat %"];
 const MEASUREMENT_UNITS = { "Weight": "lbs", "Waist": "in", "Chest": "in", "Arms": "in", "Thighs": "in", "Hips": "in", "Body Fat %": "%" };
 
-const PEPTIDE_LIBRARY = [
-  { name: "GHK-Cu (Copper Peptide)", category: "Recovery / Skin", mechanism: "Copper-binding tripeptide involved in tissue remodeling and collagen signaling.", halfLife: "Short, minutes in circulation, effects are local/tissue-level", study: "well-studied", studyNote: "Decades of published research for wound healing and skin, human and animal. Broader anti-inflammatory claims have far less human evidence." },
-  { name: "Retatrutide", category: "Metabolic / Fat Loss", mechanism: "Triple agonist: GLP-1, GIP, and glucagon receptors.", halfLife: "~6 days", study: "in trials", studyNote: "Eli Lilly's Phase 3 TRIUMPH program, strong published results, not FDA approved yet as of mid-2026." },
-  { name: "Tesamorelin", category: "GH Secretagogue (GHRH analog)", mechanism: "Stimulates the pituitary to release growth hormone.", halfLife: "~26-38 minutes", study: "well-studied", studyNote: "FDA-approved (for HIV-associated lipodystrophy), backed by real RCTs." },
-  { name: "Ipamorelin", category: "GH Secretagogue (GHRP)", mechanism: "Ghrelin receptor agonist, selective GH release.", halfLife: "~2 hours", study: "some studies", studyNote: "Human data shows selective GH release with minimal cortisol/prolactin spike." },
-  { name: "CJC-1295", category: "GH Secretagogue (GHRH analog)", mechanism: "Extended-action GHRH analog, often paired with a GHRP.", halfLife: "~30 min (no DAC) or 6-8 days (with DAC)", study: "some studies", studyNote: "Human pharmacokinetic data exists, less clinical trial history than tesamorelin." },
-  { name: "Sermorelin", category: "GH Secretagogue (GHRH analog)", mechanism: "Stimulates natural pituitary GH release.", halfLife: "~10-20 minutes", study: "well-studied", studyNote: "Was FDA-approved for years, solid clinical history." },
-  { name: "MK-677 (Ibutamoren)", category: "GH Secretagogue (oral)", mechanism: "Oral ghrelin receptor agonist, raises GH and IGF-1.", halfLife: "~24 hours", study: "some studies", studyNote: "Reliably increases appetite; some evidence of reduced insulin sensitivity long-term." },
-  { name: "BPC-157", category: "Recovery / Healing", mechanism: "Stable gastric pentadecapeptide, proposed to promote tissue repair.", halfLife: "Not well characterized in humans", study: "early / preclinical", studyNote: "Extensive animal research, very limited human trial data. Regulatory status is murky." },
-  { name: "TB-500", category: "Recovery / Healing", mechanism: "Promotes cell migration and tissue repair via actin regulation.", halfLife: "Not well characterized in humans", study: "early / preclinical", studyNote: "Strong preclinical signal, minimal human RCT data." },
-  { name: "Semaglutide", category: "Metabolic / Fat Loss", mechanism: "GLP-1 receptor agonist.", halfLife: "~7 days", study: "well-studied", studyNote: "FDA-approved (Ozempic/Wegovy), large-scale human RCTs." },
-  { name: "Tirzepatide", category: "Metabolic / Fat Loss", mechanism: "Dual GIP/GLP-1 receptor agonist.", halfLife: "~5 days", study: "well-studied", studyNote: "FDA-approved (Mounjaro/Zepbound), outperforms semaglutide in head-to-head trials." },
-  { name: "KPV", category: "Anti-inflammatory", mechanism: "Tripeptide fragment of alpha-MSH.", halfLife: "Not well characterized", study: "early / preclinical", studyNote: "Mostly animal/gut-inflammation model research." },
-  { name: "Thymosin Alpha-1", category: "Immune Modulation", mechanism: "Modulates T-cell function and immune response.", halfLife: "~2 hours", study: "some studies", studyNote: "Used in some countries for hepatitis and as an immune adjunct." },
-  { name: "AOD-9604", category: "Metabolic / Fat Loss", mechanism: "Modified fragment of HGH targeting fat metabolism.", halfLife: "Short, minutes", study: "studied, mixed results", studyNote: "Largely failed to show benefit over placebo in its own trials." },
-  { name: "Follistatin 344", category: "Muscle Growth", mechanism: "Binds and inhibits myostatin.", halfLife: "Not well characterized", study: "early / preclinical", studyNote: "Very limited human safety data, higher-risk/less-understood profile." },
-  { name: "IGF-1 LR3", category: "Muscle Growth", mechanism: "Long-acting analog of insulin-like growth factor 1.", halfLife: "~20-30 hours", study: "early / limited human safety data", studyNote: "Common in bodybuilding circles, real risks: hypoglycemia, organ growth concerns." },
+// Common compound names, offered as autocomplete suggestions when adding a
+// peptide to the stack. No reference library UI anymore, just a name assist.
+const KNOWN_PEPTIDE_NAMES = [
+  "GHK-Cu", "Retatrutide", "Tesamorelin", "Ipamorelin", "CJC-1295", "Sermorelin",
+  "MK-677", "BPC-157", "TB-500", "Semaglutide", "Tirzepatide", "KPV",
+  "Thymosin Alpha-1", "AOD-9604", "Follistatin 344", "IGF-1 LR3",
 ];
 
 // ============================================================
@@ -424,6 +413,10 @@ function normalizeState(raw) {
     workoutConfig: raw.workoutConfig || {},
     exerciseRegistry: raw.exerciseRegistry || { push: [], pull: [], legs: [] },
     vialTracker: raw.vialTracker || {},
+    // Single shared bottle of bacteriostatic water, tracked separately from
+    // any one peptide's vial. Advisory only: flags sterility risk past its
+    // shelf life, never blocks logging a dose.
+    bacWater: raw.bacWater || { openedDate: null, shelfLifeDays: 30 },
     peptideConfig: raw.peptideConfig || JSON.parse(JSON.stringify(DEFAULT_PEPTIDES)),
     measurements: raw.measurements || [],
     scheduleNotes: raw.scheduleNotes || {},
@@ -438,14 +431,14 @@ function setSaveIndicator(state) {
   const el = document.getElementById("saveIndicator");
   if (!el) return;
   if (state === "saving") {
-    el.textContent = "‚óè saving";
+    el.innerHTML = '<span class="dot"></span>Saving';
     el.className = "show";
   } else if (state === "saved") {
-    el.textContent = "‚úì saved";
+    el.textContent = "Saved";
     el.className = "show";
     setTimeout(() => { el.className = ""; }, 1200);
   } else if (state === "error") {
-    el.textContent = "‚ö† not saved";
+    el.textContent = "Not saved";
     el.className = "show err";
   }
 }
@@ -537,6 +530,15 @@ function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
+// Small CSS-drawn trend indicator (up/down triangle or flat dash). Avoids
+// relying on Unicode glyphs, which can get mangled by copy/paste into other
+// editors (GitHub's web editor has corrupted arrow/emoji characters before).
+function trendIconHtml(key, color) {
+  if (key === "up") return `<span style="display:inline-block; width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:8px solid ${color};"></span>`;
+  if (key === "down") return `<span style="display:inline-block; width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:8px solid ${color};"></span>`;
+  return `<span style="display:inline-block; width:9px; height:2px; border-radius:1px; background:${color};"></span>`;
+}
+
 function epley1RM(weight, reps) { return weight * (1 + reps / 30); }
 const RPE_MIN_WEIGHT = 10;
 const RIR_PCT_DROPS = [0, 4, 8, 14, 22, 30, 38];
@@ -611,9 +613,9 @@ function getTrendArrow(name) {
   };
   const latest = e1RMOnDate(dates[0]);
   const prior = e1RMOnDate(dates[1]);
-  if (latest > prior * 1.01) return { arrow: "‚ñ≤", color: "var(--push)" };
-  if (latest < prior * 0.99) return { arrow: "‚ñº", color: "var(--legs)" };
-  return { arrow: "‚ñ¨", color: "var(--sub)" };
+  if (latest > prior * 1.01) return { arrow: "up", color: "var(--push)" };
+  if (latest < prior * 0.99) return { arrow: "down", color: "var(--legs)" };
+  return { arrow: "flat", color: "var(--sub)" };
 }
 // A note on a date means the lifter already explained what happened, don't
 // second-guess it with the automatic regression math.
@@ -626,7 +628,7 @@ function getCoachTip(name, beforeDate) {
 
   const lastDate = dates[0];
   if (appState.scheduleNotes[lastDate]) {
-    return `Note from that day: "${appState.scheduleNotes[lastDate]}" ‚Äî not reading this as a decline.`;
+    return `Note from that day: "${appState.scheduleNotes[lastDate]}". Not reading this as a decline.`;
   }
   const lastSets = entries.filter(e => e.date === lastDate);
   const topSet = pickRepresentativeSet(lastSets, range);
@@ -700,7 +702,7 @@ function countDecliningExercises() {
     const dates = [...new Set(entries.map(e => e.date))];
     if (dates.length < 2 || dates[0] < cutoff) return;
     const trend = getTrendArrow(name);
-    if (trend && trend.arrow === "‚ñº") count++;
+    if (trend && trend.arrow === "down") count++;
   });
   return count;
 }
@@ -792,7 +794,7 @@ function showToast(msg, isError) {
 }
 function showPRToast(name, weight) {
   const t = document.getElementById("toast");
-  t.textContent = "üéâ New PR! " + weight + " on " + name;
+  t.textContent = "New PR: " + weight + " on " + name;
   t.className = "toast show pr-toast";
   setTimeout(() => t.classList.remove("show"), 2400);
 }
@@ -876,6 +878,34 @@ function showSetEditModal(entry, onSave) {
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
+// A confirm modal with one date field, defaulting to today but editable, so
+// a vial or a water bottle can be backdated if it wasn't logged same-day.
+function showDateConfirmModal(title, message, confirmLabel, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">${title}</div>
+      <div style="font-size:12.5px; color:var(--sub); line-height:1.5; margin-bottom:14px;">${message}</div>
+      <label class="modal-label">DATE</label>
+      <input type="date" id="dDate" class="modal-input" value="${todayStr()}">
+      <div class="modal-btn-row">
+        <button class="modal-cancel" id="dCancel">Cancel</button>
+        <button class="modal-confirm" id="dOk">${confirmLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector("#dCancel").onclick = () => overlay.remove();
+  overlay.querySelector("#dOk").onclick = () => {
+    const rawDate = overlay.querySelector("#dDate").value;
+    if (!rawDate) { showToast("Pick a date"); return; }
+    overlay.remove();
+    onConfirm(rawDate);
+  };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
 // ============================================================
 // SHARED SET-LOGGING COMPONENT
 // One implementation used everywhere a set gets logged (main exercise
@@ -937,7 +967,7 @@ function buildSetLogRow(exerciseName, onLogged) {
 }
 
 // ============================================================
-// ABS QUICK LOG ‚Äî now asks which exercise, uses the shared robust logger
+// ABS QUICK LOG - now asks which exercise, uses the shared robust logger
 // ============================================================
 let absSelectedExercise = AB_EXERCISES[0];
 function buildAbsQuickLog() {
@@ -1091,7 +1121,7 @@ function renderExerciseEditor(main, info) {
     row.innerHTML = `
       <span class="drag-handle" style="color:var(--sub-dim); cursor:grab; flex-shrink:0; padding:4px;">${ICONS.grip}</span>
       <input type="text" value="${(name || '').replace(/"/g, '&quot;')}" placeholder="Exercise name" style="flex:1; background:var(--card-hi); border:none; border-radius:12px; color:var(--text); padding:9px 10px; font-size:13.5px;">
-      <button class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border-radius:12px; font-weight:800; padding:0 14px; height:38px;">√ó</button>
+      <button class="removeRowBtn" style="background:var(--card-hi); color:var(--legs); border-radius:12px; font-weight:800; padding:0 14px; height:38px; display:flex; align-items:center;">${ICONS.trash}</button>
     `;
     row.querySelector(".removeRowBtn").onclick = () => row.remove();
     enableDragReorder(row, rows);
@@ -1131,8 +1161,8 @@ function renderExerciseEditor(main, info) {
       pairRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--card-hi); border-radius:10px; padding:9px 12px; margin-bottom:6px;";
       pairRow.innerHTML = `<span style="font-size:12.5px; font-weight:700;">${pair.join(" + ")}</span>`;
       const rm = document.createElement("span");
-      rm.style.cssText = "color:var(--legs); cursor:pointer; font-weight:800; font-size:14px; padding:0 4px;";
-      rm.textContent = "√ó";
+      rm.style.cssText = "color:var(--legs); cursor:pointer; padding:0 4px; display:inline-flex; align-items:center;";
+      rm.innerHTML = ICONS.trash;
       rm.onclick = () => { editorSupersets.splice(idx, 1); renderSupersetSection(); };
       pairRow.appendChild(rm);
       supersetSection.appendChild(pairRow);
@@ -1254,9 +1284,9 @@ function buildLogExerciseCard(name) {
       <div class="card-title" style="display:flex; align-items:center; gap:6px;"><span style="color:var(--sub-dim); display:inline-flex;">${ICONS.dumbbell}</span>${escapeHtml(name)}</div>
       <div class="card-hint">${todaysSets.length ? todaysSets.length + ' set' + (todaysSets.length === 1 ? '' : 's') + ' logged today' : 'No sets logged today'}</div>
       ${last ? `<div class="card-hint" style="color:var(--gold);">Last: ${formatWeightDisplay(last)}${last.reps ? ' x ' + last.reps : ''} &middot; ${formatDateLabel(last.date)}</div>` : ''}
-      ${tip ? `<div class="card-hint" style="color:var(--push); margin-top:3px; line-height:1.4;">${tipIsAi ? '‚ú®' : 'üí°'} ${tip}</div>` : ''}
+      ${tip ? `<div class="card-hint" style="color:var(--push); margin-top:3px; line-height:1.4;">${tipIsAi ? '<strong>AI:</strong> ' : ''}${tip}</div>` : ''}
     </div>
-    <div class="pr">${pr ? pr.weight : '‚Äî'}<span>PR</span></div>
+    <div class="pr">${pr ? pr.weight : '--'}<span>PR</span></div>
   `;
   card.appendChild(head);
   card.appendChild(buildSetLogRow(name, () => renderLogTab()));
@@ -1449,7 +1479,7 @@ async function renderLogTab() {
   if (aiTipsForDay && aiTipsForDay.structuralNote) {
     const structNote = document.createElement("div");
     structNote.className = "hero-card";
-    structNote.innerHTML = `<div class="eyebrow" style="color:var(--gold); margin-bottom:4px;">‚ú® Coach note</div><div style="font-size:12.5px; color:var(--text); line-height:1.5;">${aiTipsForDay.structuralNote}</div>`;
+    structNote.innerHTML = `<div class="eyebrow" style="color:var(--gold); margin-bottom:4px;">Coach note</div><div style="font-size:12.5px; color:var(--text); line-height:1.5;">${aiTipsForDay.structuralNote}</div>`;
     main.appendChild(structNote);
   }
 
@@ -1641,6 +1671,25 @@ function estimateDaysRemaining(p, remaining) {
   if (!perWeekUnits) return null;
   return Math.round((remaining / perWeekUnits) * 7);
 }
+
+// ---- Shelf life: reconstituted vials and the shared BAC water bottle ----
+// Advisory only, matches how you actually use this: flag the risk, never
+// block logging a dose. Sterility past the window is a judgment call, not
+// something the app should decide for you.
+function getVialExpiration(p) {
+  const startDate = (appState.vialTracker[p.id] && appState.vialTracker[p.id].startDate) || p.start;
+  const shelfDays = p.vialShelfLifeDays || 30;
+  const expireDate = addDaysLocal(startDate, shelfDays);
+  return { reconstitutedOn: startDate, shelfDays, expireDate, daysLeft: dayDiff(todayStr(), expireDate) };
+}
+function getBacWaterStatus() {
+  const bw = appState.bacWater;
+  if (!bw || !bw.openedDate) return null;
+  const shelfDays = bw.shelfLifeDays || 30;
+  const expireDate = addDaysLocal(bw.openedDate, shelfDays);
+  return { openedDate: bw.openedDate, shelfDays, expireDate, daysLeft: dayDiff(todayStr(), expireDate) };
+}
+
 function computeStreak() {
   let d = todayStr(), streak = 0, firstDay = true;
   while (true) {
@@ -1689,8 +1738,67 @@ function renderPeptideSnapshot() {
     <div style="flex:1;"><div class="eyebrow">Doses Today</div><div class="hero-number" style="font-size:24px; margin-top:4px;">${doses.taken}/${doses.due}</div></div>
   `;
 }
+// Single shared bottle of BAC water. Advisory: past 30 days it's flagged,
+// never blocking, since the actual call on sterility is the lifter's to make.
+function renderBacWaterCard() {
+  const el = document.getElementById("bacWaterCard");
+  if (!el) return;
+  const status = getBacWaterStatus();
+  const wrap = document.createElement("div");
+  wrap.className = "card";
+  wrap.style.padding = "14px 16px";
+  if (!status) {
+    wrap.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div>
+          <div style="font-weight:800; font-size:13px;">BAC Water</div>
+          <div style="color:var(--sub); font-size:11px; margin-top:2px;">Not tracked yet. Once open, it's good for about 30 days.</div>
+        </div>
+      </div>
+    `;
+    const btn = document.createElement("button");
+    btn.textContent = "Opened New Bottle";
+    btn.style.cssText = "width:100%; margin-top:10px; background:var(--card-hi); color:var(--text); border-radius:10px; padding:9px; font-weight:700; font-size:11.5px;";
+    btn.onclick = () => {
+      showDateConfirmModal("Opened New Bottle", "When did you open this bottle of bacteriostatic water? Defaults to today.", "Save", async (dateStr) => {
+        appState.bacWater.openedDate = dateStr;
+        await saveState();
+        renderBacWaterCard();
+      });
+    };
+    wrap.appendChild(btn);
+  } else {
+    const expired = status.daysLeft <= 0;
+    const color = expired ? "var(--legs)" : status.daysLeft <= 7 ? "var(--gold)" : "var(--push)";
+    const statusText = expired
+      ? `Opened ${formatDateLabel(status.openedDate)}, past its ${status.shelfDays}-day window. Still usable at your judgment, just treat it as compromised and keep everything extra sterile.`
+      : `Opened ${formatDateLabel(status.openedDate)} &middot; good for ~${status.daysLeft} more day${status.daysLeft === 1 ? '' : 's'}`;
+    wrap.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div style="font-weight:800; font-size:13px;">BAC Water</div>
+        <span style="font-size:11px; font-weight:700; color:${color};">${expired ? 'Past shelf life' : status.daysLeft + 'd left'}</span>
+      </div>
+      <div style="color:${color}; font-size:11px; margin-top:4px; line-height:1.5;">${statusText}</div>
+    `;
+    const btn = document.createElement("button");
+    btn.textContent = "Opened New Bottle";
+    btn.style.cssText = "width:100%; margin-top:10px; background:var(--card-hi); color:var(--text); border-radius:10px; padding:9px; font-weight:700; font-size:11.5px;";
+    btn.onclick = () => {
+      showDateConfirmModal("Opened New Bottle", "Starting a fresh bottle resets its 30-day clock. When did you open it? Defaults to today.", "Save", async (dateStr) => {
+        appState.bacWater.openedDate = dateStr;
+        await saveState();
+        renderBacWaterCard();
+      });
+    };
+    wrap.appendChild(btn);
+  }
+  el.innerHTML = "";
+  el.appendChild(wrap);
+}
+
 async function renderPeptideTab() {
   renderPeptideSnapshot();
+  renderBacWaterCard();
   const dateInput = document.getElementById("peptideDate");
   if (!dateInput.value) dateInput.value = todayStr();
   dateInput.onchange = () => renderPeptideTab();
@@ -1806,6 +1914,13 @@ async function renderPeptideTab() {
     const vialPct = Math.round((vial.remaining / vial.total) * 100);
     const vialColor = vialPct > 30 ? "var(--push)" : vialPct > 10 ? "var(--gold)" : "var(--legs)";
     const daysLeft = estimateDaysRemaining(p, vial.remaining);
+    const exp = getVialExpiration(p);
+    // Sterility risk, not units. Advisory: past its shelf life still shows
+    // usable if units remain, just flagged, never blocked.
+    const expColor = exp.daysLeft <= 0 ? "var(--legs)" : exp.daysLeft <= 5 ? "var(--gold)" : "var(--sub)";
+    const expText = exp.daysLeft <= 0
+      ? `Past its ${exp.shelfDays}-day shelf life since ${formatDateLabel(exp.reconstitutedOn)}, sterility risk`
+      : `Mixed ${formatDateLabel(exp.reconstitutedOn)} &middot; good for ~${exp.daysLeft} more day${exp.daysLeft === 1 ? '' : 's'}`;
     const vialWrap = document.createElement("div");
     vialWrap.style.cssText = "margin-top:14px; padding-top:14px; border-top:1px solid var(--line);";
     vialWrap.innerHTML = `
@@ -1815,17 +1930,23 @@ async function renderPeptideTab() {
       </div>
       <div class="thin-bar"><div class="thin-bar-fill" style="width:${vialPct}%; background:${vialColor};"></div></div>
       ${vialPct <= 30 ? `<div style="color:${vialColor}; font-size:11px; font-weight:700; margin-top:8px;">${vialPct <= 10 ? 'Critically low' : 'Getting low'}${daysLeft !== null ? ` &middot; ~${daysLeft} day${daysLeft === 1 ? '' : 's'} left` : ''}, reorder soon</div>` : ''}
+      <div style="color:${expColor}; font-size:11px; font-weight:${exp.daysLeft <= 0 ? 700 : 500}; margin-top:6px;">${expText}</div>
     `;
     const newVialBtn = document.createElement("button");
     newVialBtn.textContent = "Start New Vial";
     newVialBtn.style.cssText = "width:100%; margin-top:10px; background:var(--card-hi); color:var(--sub); border-radius:12px; padding:9px; font-weight:700; font-size:11.5px;";
     newVialBtn.onclick = () => {
-      showConfirmModal(`Mixed a new ${p.name} vial today? This resets the tracker to ${p.vialUnits} units remaining.`, "Start New Vial", async () => {
-        appState.vialTracker[p.id] = { startDate: todayStr() };
-        await saveState();
-        showToast("New vial started");
-        renderPeptideTab();
-      }, false);
+      showDateConfirmModal(
+        "Start New Vial",
+        `Mixed a new ${p.name} vial? This resets the tracker to ${p.vialUnits} units remaining and starts its ${p.vialShelfLifeDays || 30}-day shelf-life clock. Pick the date you actually reconstituted it, defaults to today.`,
+        "Start New Vial",
+        async (dateStr) => {
+          appState.vialTracker[p.id] = { startDate: dateStr };
+          await saveState();
+          showToast("New vial started");
+          renderPeptideTab();
+        }
+      );
     };
     vialWrap.appendChild(newVialBtn);
     card.appendChild(vialWrap);
@@ -1948,35 +2069,6 @@ function buildCalcPanel() {
   ["calcVialMg", "calcBacMl", "calcDose", "calcDoseUnit"].forEach(id => { document.getElementById(id).oninput = recalc; });
 }
 
-function buildLibraryPanel() {
-  const panel = document.getElementById("libraryPanel");
-  const studyColors = { "well-studied": "var(--push)", "in trials": "var(--gold)", "some studies": "var(--gold)", "studied, mixed results": "var(--gold)", "early / preclinical": "var(--legs)", "early / limited human safety data": "var(--legs)" };
-  panel.innerHTML = `<input type="text" id="libSearch" placeholder="Search peptides..." style="width:100%; background:var(--card-hi); border-radius:12px; color:var(--text); padding:10px; font-size:13.5px; margin-bottom:10px;"><div id="libList"></div>`;
-  const renderList = (filter) => {
-    const listEl = document.getElementById("libList");
-    const f = (filter || "").toLowerCase();
-    const items = PEPTIDE_LIBRARY.filter(p => !f || p.name.toLowerCase().includes(f) || p.category.toLowerCase().includes(f));
-    listEl.innerHTML = "";
-    items.forEach(p => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.style.cssText = "padding:12px 14px; margin-bottom:8px;";
-      card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div><div style="font-weight:800; font-size:13.5px;">${p.name}</div><div style="color:var(--sub); font-size:10.5px; margin-top:1px;">${p.category}</div></div>
-          <span style="font-size:9.5px; font-weight:800; padding:4px 8px; border-radius:20px; white-space:nowrap; color:#0a0e12; background:${studyColors[p.study] || 'var(--sub)'};">${p.study}</span>
-        </div>
-        <div style="font-size:12px; color:var(--text); margin-top:8px; line-height:1.5;">${p.mechanism}</div>
-        <div style="font-size:11px; color:var(--sub); margin-top:6px;"><strong>Half-life:</strong> ${p.halfLife}</div>
-        <div style="font-size:11px; color:var(--sub); margin-top:6px; line-height:1.5;">${p.studyNote}</div>
-      `;
-      listEl.appendChild(card);
-    });
-  };
-  document.getElementById("libSearch").oninput = (e) => renderList(e.target.value);
-  renderList("");
-}
-
 function buildStackPanel() {
   const panel = document.getElementById("stackPanel");
   panel.innerHTML = "";
@@ -1984,6 +2076,11 @@ function buildStackPanel() {
   note.style.cssText = "color:var(--sub); font-size:11px; margin-bottom:12px; line-height:1.5;";
   note.textContent = "Add, edit, or remove peptides in your active stack. Dosing decisions are yours and whoever's supervising your protocol.";
   panel.appendChild(note);
+
+  const nameList = document.createElement("datalist");
+  nameList.id = "knownPeptideNames";
+  nameList.innerHTML = KNOWN_PEPTIDE_NAMES.map(n => `<option value="${escapeHtml(n)}">`).join("");
+  panel.appendChild(nameList);
 
   const warning = document.createElement("div");
   panel.appendChild(warning);
@@ -2004,7 +2101,7 @@ function buildStackPanel() {
     row.innerHTML = `
       <input type="hidden" class="f-id" value="${id}">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-        <div><label class="modal-label">NAME</label><input type="text" class="f-name" value="${(p.name || '').replace(/"/g, '&quot;')}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
+        <div><label class="modal-label">NAME</label><input type="text" class="f-name" list="knownPeptideNames" value="${(p.name || '').replace(/"/g, '&quot;')}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
         <div><label class="modal-label">DOSE LABEL</label><input type="text" class="f-dose" value="${(p.dose || '').replace(/"/g, '&quot;')}" placeholder="e.g. 6 units" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
@@ -2030,6 +2127,10 @@ function buildStackPanel() {
         <div><label class="modal-label">AM UNITS</label><input type="number" class="f-unitsam" value="${p.unitsPerDoseAM || ''}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
         <div><label class="modal-label">PM UNITS</label><input type="number" class="f-unitspm" value="${p.unitsPerDosePM || ''}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
         <div><label class="modal-label">VIAL SIZE (UNITS)</label><input type="number" class="f-vialunits2" value="${p.vialUnits || ''}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;"></div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label class="modal-label">VIAL SHELF LIFE AFTER MIXING (DAYS)</label>
+        <input type="number" class="f-shelflife" value="${p.vialShelfLifeDays || 30}" style="width:100%; background:var(--card-hi); border-radius:8px; color:var(--text); padding:8px; font-size:13px;">
       </div>
       <button class="removeRowBtn" style="width:100%; background:var(--card-hi); color:var(--legs); border-radius:8px; padding:8px; font-weight:700; font-size:11.5px;">Remove from Stack</button>
     `;
@@ -2068,6 +2169,7 @@ function buildStackPanel() {
       const pattern = row.querySelector(".f-pattern").value;
       const existingId = row.querySelector(".f-id").value;
       const p = { id: existingId || ("pep" + Date.now() + i), name, dose: row.querySelector(".f-dose").value.trim(), start: row.querySelector(".f-start").value || todayStr(), pattern, twiceDaily, color: PEPTIDE_COLORS[i % PEPTIDE_COLORS.length] };
+      p.vialShelfLifeDays = parseInt(row.querySelector(".f-shelflife").value) || 30;
       if (pattern === "daily-finite") p.cycleDays = parseInt(row.querySelector(".f-cycledays").value) || 50;
       if (twiceDaily) { p.unitsPerDoseAM = parseFloat(row.querySelector(".f-unitsam").value) || 0; p.unitsPerDosePM = parseFloat(row.querySelector(".f-unitspm").value) || 0; p.vialUnits = parseFloat(row.querySelector(".f-vialunits2").value) || 0; }
       else { p.unitsPerDose = parseFloat(row.querySelector(".f-unitsdose").value) || 0; p.vialUnits = parseFloat(row.querySelector(".f-vialunits").value) || 0; }
@@ -2089,16 +2191,21 @@ function buildStackPanel() {
 }
 
 // ============================================================
-// SUPPLY FORECAST ‚Äî every vial's runway in one place, soonest first
+// SUPPLY FORECAST - every vial's runway in one place, soonest first
 // ============================================================
 // The single most urgent vial across the stack (an empty vial counts as 0 days).
 function getSoonestRunout() {
   let best = null;
   peptides.forEach(p => {
     const vial = getVialRemaining(p);
-    const days = vial.remaining <= 0 ? 0 : estimateDaysRemaining(p, vial.remaining);
-    if (days === null) return;
-    if (!best || days < best.days) best = { name: p.name, days };
+    const unitsDays = vial.remaining <= 0 ? 0 : estimateDaysRemaining(p, vial.remaining);
+    const exp = getVialExpiration(p);
+    // Two different actions depending on which clock runs out first: low
+    // units means reorder more peptide, an aging vial means remix a fresh
+    // one from what you already have.
+    const days = unitsDays === null ? exp.daysLeft : Math.min(unitsDays, exp.daysLeft);
+    const reason = (unitsDays !== null && unitsDays <= exp.daysLeft) ? "units" : "expired";
+    if (!best || days < best.days) best = { name: p.name, days, reason };
   });
   return best;
 }
@@ -2107,20 +2214,38 @@ function buildSupplyPanel() {
   const rows = peptides.map(p => {
     const vial = getVialRemaining(p);
     const pct = vial.total ? Math.round((vial.remaining / vial.total) * 100) : 0;
-    const daysLeft = estimateDaysRemaining(p, vial.remaining);
-    const outDate = (daysLeft !== null && daysLeft >= 0 && vial.remaining > 0) ? addDaysLocal(todayStr(), daysLeft) : null;
-    return { p, vial, pct, daysLeft, outDate };
+    const unitsDays = estimateDaysRemaining(p, vial.remaining);
+    const outDate = (unitsDays !== null && unitsDays >= 0 && vial.remaining > 0) ? addDaysLocal(todayStr(), unitsDays) : null;
+    const exp = getVialExpiration(p);
+    // Two independent clocks: running out of units, and the mixed vial aging
+    // past its shelf life. Whichever hits first is what actually matters.
+    // unitsBinds is only true when we have a units estimate AND it's the
+    // sooner of the two dates.
+    const unitsBinds = unitsDays !== null && unitsDays <= exp.daysLeft;
+    const bindingDays = unitsDays === null ? exp.daysLeft : Math.min(unitsDays, exp.daysLeft);
+    return { p, vial, pct, unitsDays, outDate, exp, unitsBinds, bindingDays };
   });
-  // Soonest to run out first; anything with no dose amount set sinks to the bottom.
-  rows.sort((a, b) => (a.daysLeft === null ? Infinity : a.daysLeft) - (b.daysLeft === null ? Infinity : b.daysLeft));
+  rows.sort((a, b) => a.bindingDays - b.bindingDays);
 
-  const list = rows.map(({ p, vial, pct, daysLeft, outDate }) => {
+  const bacStatus = getBacWaterStatus();
+  const bacFlag = bacStatus && bacStatus.daysLeft <= 0
+    ? `<div style="color:var(--legs); font-size:11px; font-weight:700; margin-bottom:10px;">Shared BAC water is past its shelf life, keep everything extra sterile until you open a new bottle.</div>`
+    : "";
+
+  const list = rows.map(({ p, vial, pct, unitsDays, outDate, exp, unitsBinds }) => {
     const color = pct > 30 ? "var(--push)" : pct > 10 ? "var(--gold)" : "var(--legs)";
+    const expColor = exp.daysLeft <= 0 ? "var(--legs)" : exp.daysLeft <= 5 ? "var(--gold)" : "var(--sub)";
     let timing;
-    if (daysLeft === null) timing = "No dose amount set";
-    else if (vial.remaining <= 0) timing = "Out now, reorder";
-    else timing = `~${daysLeft} day${daysLeft === 1 ? "" : "s"} left, out around ${formatDateLabel(outDate)}`;
-    const emphasize = daysLeft !== null && pct <= 30;
+    if (vial.remaining <= 0) {
+      timing = "Out of units now, reorder";
+    } else if (exp.daysLeft <= 0) {
+      timing = `Past its shelf life since ${formatDateLabel(exp.expireDate)}`;
+    } else if (unitsBinds) {
+      timing = `~${unitsDays} day${unitsDays === 1 ? "" : "s"} left, out around ${formatDateLabel(outDate)}`;
+    } else {
+      timing = `Shelf life is the limit: ~${exp.daysLeft} day${exp.daysLeft === 1 ? "" : "s"} left in this vial`;
+    }
+    const emphasize = pct <= 30 || exp.daysLeft <= 5;
     return `
       <div class="list-row" style="flex-direction:column; align-items:stretch;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
@@ -2128,14 +2253,15 @@ function buildSupplyPanel() {
           <span style="font-size:12.5px; font-weight:700; color:${color}; white-space:nowrap;">${vial.remaining}/${vial.total} u &middot; ${pct}%</span>
         </div>
         <div class="thin-bar" style="margin-top:8px;"><div class="thin-bar-fill" style="width:${pct}%; background:${color};"></div></div>
-        <div style="font-size:11px; color:${emphasize ? color : 'var(--sub)'}; font-weight:${emphasize ? 700 : 500}; margin-top:6px;">${timing}</div>
+        <div style="font-size:11px; color:${emphasize ? (unitsBinds ? color : expColor) : 'var(--sub)'}; font-weight:${emphasize ? 700 : 500}; margin-top:6px;">${timing}</div>
       </div>`;
   }).join("");
 
   panel.innerHTML = `
     <div class="card" style="padding:16px 18px;">
       <div style="font-weight:800; font-size:13.5px; margin-bottom:4px;">Supply forecast</div>
-      <div style="color:var(--sub); font-size:11px; margin-bottom:6px; line-height:1.5;">Every vial's runway in one place, soonest to run out first. Estimates use each peptide's current dose and pattern. Update a vial by tapping Start New Vial on its card.</div>
+      <div style="color:var(--sub); font-size:11px; margin-bottom:6px; line-height:1.5;">Every vial's runway in one place, soonest to run out first, counting both units remaining and shelf life since mixing. Update a vial by tapping Start New Vial on its card.</div>
+      ${bacFlag}
       ${list || '<div class="empty">No peptides in your stack yet</div>'}
     </div>`;
 }
@@ -2192,8 +2318,8 @@ function renderDataTab() {
       head.innerHTML = `
         <div><div class="card-title">${escapeHtml(name)}</div><div class="card-hint">${entries.length} set${entries.length === 1 ? '' : 's'} logged</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
-          ${trend ? `<span style="color:${trend.color}; font-weight:800; font-size:14px;">${trend.arrow}</span>` : ''}
-          <div class="pr">${pr ? pr.weight : '‚Äî'}<span>PR</span></div>
+          ${trend ? trendIconHtml(trend.arrow, trend.color) : ''}
+          <div class="pr">${pr ? pr.weight : '--'}<span>PR</span></div>
           <span style="color:var(--sub-dim); transition:transform 0.25s ease;" class="chev">${ICONS.chevron}</span>
         </div>
       `;
@@ -2209,7 +2335,7 @@ function renderDataTab() {
         const latest = entries[0];
         const caption = document.createElement("div");
         caption.style.cssText = "display:flex; justify-content:space-between; gap:10px; padding:0 18px 8px; font-size:10.5px; color:var(--sub);";
-        caption.innerHTML = `<span>Latest: <strong style="color:var(--text);">${formatWeightDisplay(latest)}${latest.reps ? ' x ' + latest.reps : ''}</strong> &middot; ${formatDateLabel(latest.date)}</span><span>Best: <strong style="color:var(--gold);">${pr ? pr.weight : '‚Äî'}</strong></span>`;
+        caption.innerHTML = `<span>Latest: <strong style="color:var(--text);">${formatWeightDisplay(latest)}${latest.reps ? ' x ' + latest.reps : ''}</strong> &middot; ${formatDateLabel(latest.date)}</span><span>Best: <strong style="color:var(--gold);">${pr ? pr.weight : '--'}</strong></span>`;
         expand.appendChild(caption);
       }
       entries.forEach(e => {
@@ -2281,7 +2407,7 @@ function renderDataTab() {
             <circle cx="20" cy="20" r="${r}" fill="none" stroke="var(--card-hi)" stroke-width="4"/>
             <circle cx="20" cy="20" r="${r}" fill="none" stroke="${ringColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 20 20)"/>
           </svg>
-          <div style="min-width:0;"><div class="list-row-title">${muscle}</div>${suggestion ? `<div class="list-row-sub" style="line-height:1.4;">üí° ${suggestion}</div>` : `<div class="list-row-sub" style="color:${ringColor};">${label}</div>`}</div>
+          <div style="min-width:0;"><div class="list-row-title">${muscle}</div>${suggestion ? `<div class="list-row-sub" style="line-height:1.4;">${suggestion}</div>` : `<div class="list-row-sub" style="color:${ringColor};">${label}</div>`}</div>
         </div>
         <div style="text-align:right; flex-shrink:0; margin-left:10px;"><div style="font-size:15px; font-weight:800;">${count}</div><div style="font-size:9px; color:var(--sub-dim); text-transform:uppercase;">sets</div></div>
       `;
@@ -2436,7 +2562,7 @@ async function renderHomeView() {
       <div style="font-size:22px; font-weight:800; letter-spacing:-0.03em;">${new Date(today + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}</div>
       <div style="color:var(--sub); font-size:12px; margin-top:1px;">${new Date(today + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}</div>
     </div>
-    <div style="color:var(--sub); font-size:12px; font-weight:600;">${streak > 0 ? `üî• ${streak}d streak` : ''}</div>
+    <div style="color:var(--sub); font-size:12px; font-weight:600;">${streak > 0 ? `${streak}d streak` : ''}</div>
   `;
   home.appendChild(header);
 
@@ -2452,8 +2578,8 @@ async function renderHomeView() {
   const sessionKeys = new Set();
   appState.trainingLogs.forEach(l => { if (l.date >= sevenDaysAgo) sessionKeys.add(l.date + "_" + l.day); });
   let upCount = 0, downCount = 0;
-  info.exercises.forEach(name => { const t = getTrendArrow(name); if (t && t.arrow === "‚ñ≤") upCount++; if (t && t.arrow === "‚ñº") downCount++; });
-  const trendDisplay = upCount > downCount ? { icon: "‚ñ≤", label: "Trending up this week" } : downCount > upCount ? { icon: "‚ñº", label: "Trending down this week" } : { icon: "‚ñ¨", label: "Holding steady" };
+  info.exercises.forEach(name => { const t = getTrendArrow(name); if (t && t.arrow === "up") upCount++; if (t && t.arrow === "down") downCount++; });
+  const trendDisplay = upCount > downCount ? { key: "up", color: "var(--push)", label: "Trending up this week" } : downCount > upCount ? { key: "down", color: "var(--legs)", label: "Trending down this week" } : { key: "flat", color: "var(--sub)", label: "Holding steady" };
   const belowRange = getBelowRangeMuscles();
 
   const sessionCard = document.createElement("div");
@@ -2469,9 +2595,9 @@ async function renderHomeView() {
     <div style="color:var(--sub-dim); font-size:10.5px; margin-top:6px;">${exercisesStarted} of ${info.exercises.length} exercises started</div>
     <button id="homeLogNowBtn" style="width:100%; margin-top:16px; background:var(--gold); color:var(--bg); border-radius:var(--radius-sm); padding:13px; font-weight:800; font-size:14px;">Log Workout</button>
     <div style="margin-top:6px;">
-      <div class="quiet-stat"><span class="quiet-stat-icon">${trendDisplay.icon}</span><span class="quiet-stat-label">${trendDisplay.label}</span></div>
+      <div class="quiet-stat"><span class="quiet-stat-icon">${trendIconHtml(trendDisplay.key, trendDisplay.color)}</span><span class="quiet-stat-label">${trendDisplay.label}</span></div>
       <div class="quiet-stat"><span class="quiet-stat-icon">${ICONS.dumbbell}</span><span class="quiet-stat-label">Sessions this week</span><span class="quiet-stat-val">${sessionKeys.size}/6</span></div>
-      <div class="quiet-stat" id="homeVolumeRow" style="cursor:pointer;"><span class="quiet-stat-icon" style="color:${belowRange.length ? 'var(--legs)' : 'var(--push)'};">‚óè</span><span class="quiet-stat-label">${belowRange.length ? belowRange[0].muscle + ' below volume floor' : 'All muscle groups in range'}</span><span class="quiet-stat-val" style="color:var(--sub-dim);">‚Ä∫</span></div>
+      <div class="quiet-stat" id="homeVolumeRow" style="cursor:pointer;"><span class="quiet-stat-icon" style="display:inline-flex;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${belowRange.length ? 'var(--legs)' : 'var(--push)'};"></span></span><span class="quiet-stat-label">${belowRange.length ? belowRange[0].muscle + ' below volume floor' : 'All muscle groups in range'}</span><span class="quiet-stat-val" style="color:var(--sub-dim); display:inline-flex; transform:rotate(-90deg);">${ICONS.chevron}</span></div>
     </div>
   `;
   sessionCard.querySelector("#homeLogNowBtn").onclick = () => goToView("log");
@@ -2491,7 +2617,7 @@ async function renderHomeView() {
   pepCard.className = "hero-card";
   const pepHead = document.createElement("div");
   pepHead.style.cssText = "display:flex; justify-content:space-between; align-items:center;";
-  pepHead.innerHTML = `<div class="eyebrow">Peptides &middot; ${doneCount}/${dueList.length} due</div><div id="homePeptidesViewAll" style="color:var(--sub); font-size:11.5px; font-weight:600; cursor:pointer;">View all ‚Ä∫</div>`;
+  pepHead.innerHTML = `<div class="eyebrow">Peptides &middot; ${doneCount}/${dueList.length} due</div><div id="homePeptidesViewAll" style="color:var(--sub); font-size:11.5px; font-weight:600; cursor:pointer;">View all</div>`;
   pepHead.querySelector("#homePeptidesViewAll").onclick = () => goToView("peptides");
   pepCard.appendChild(pepHead);
   const pepList = document.createElement("div");
@@ -2549,9 +2675,12 @@ async function renderHomeView() {
   if (soon) {
     const line = document.createElement("div");
     line.style.cssText = "font-size:11px; color:var(--sub); margin-top:10px; padding-top:10px; border-top:1px solid var(--line); cursor:pointer;";
+    const verb = soon.reason === "expired" ? "remix" : "reorder";
     line.innerHTML = soon.days <= 0
-      ? `<span style="color:var(--legs); font-weight:700;">Reorder now:</span> ${escapeHtml(soon.name)} is out`
-      : `Next to reorder: <strong style="color:var(--text);">${escapeHtml(soon.name)}</strong>, ~${soon.days} day${soon.days === 1 ? '' : 's'} left`;
+      ? (soon.reason === "expired"
+          ? `<span style="color:var(--legs); font-weight:700;">Past shelf life:</span> ${escapeHtml(soon.name)} needs a fresh vial`
+          : `<span style="color:var(--legs); font-weight:700;">Reorder now:</span> ${escapeHtml(soon.name)} is out`)
+      : `Next to ${verb}: <strong style="color:var(--text);">${escapeHtml(soon.name)}</strong>, ~${soon.days} day${soon.days === 1 ? '' : 's'} left`;
     line.onclick = () => goToView("peptides");
     pepCard.appendChild(line);
   }
@@ -2581,7 +2710,7 @@ async function renderHomeView() {
   [
     { label: "Note", icon: ICONS.pencil, fn: () => goToView("log") },
     { label: "Calculator", icon: ICONS.calculator, fn: () => goToView("peptides") },
-    { label: "Library", icon: ICONS.book, fn: () => goToView("peptides") },
+    { label: "Supply", icon: ICONS.syringe, fn: () => { goToView("peptides"); setTimeout(() => { const btn = document.getElementById("supplyToggleBtn"); if (btn) btn.click(); }, 0); } },
   ].forEach(a => {
     const b = document.createElement("button");
     b.style.cssText = "flex:1; background:var(--card); color:var(--sub); border-radius:var(--radius-sm); padding:12px 6px; font-size:10.5px; font-weight:700; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; align-items:center; gap:5px;";
@@ -2593,7 +2722,7 @@ async function renderHomeView() {
 }
 
 // ============================================================
-// AI COACH TIPS ‚Äî layered over local tips, cached per day, never blocks
+// AI COACH TIPS - layered over local tips, cached per day, never blocks
 // ============================================================
 const AI_CACHE_KEY = "ale-ai-coach-cache-v1";
 function loadAiCache() { try { return JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}"); } catch (e) { return {}; } }
@@ -2668,7 +2797,7 @@ document.getElementById("dataSubNav").querySelectorAll(".seg-tab").forEach(tab =
   };
 });
 
-const PEPTIDE_PANELS = ["calcPanel", "libraryPanel", "stackPanel", "supplyPanel"];
+const PEPTIDE_PANELS = ["calcPanel", "stackPanel", "supplyPanel"];
 function togglePeptidePanel(panelId, build) {
   const panel = document.getElementById(panelId);
   const showing = panel.style.display !== "none";
@@ -2677,7 +2806,6 @@ function togglePeptidePanel(panelId, build) {
   if (!showing) build();
 }
 document.getElementById("calcToggleBtn").onclick = () => togglePeptidePanel("calcPanel", buildCalcPanel);
-document.getElementById("libraryToggleBtn").onclick = () => togglePeptidePanel("libraryPanel", buildLibraryPanel);
 document.getElementById("stackToggleBtn").onclick = () => togglePeptidePanel("stackPanel", buildStackPanel);
 document.getElementById("supplyToggleBtn").onclick = () => togglePeptidePanel("supplyPanel", buildSupplyPanel);
 
